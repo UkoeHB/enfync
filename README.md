@@ -1,6 +1,6 @@
 # Environment-friendly async (`enfync`)
 
-Provides easy-to-use utilities for performing async work regardless of environment (native/browser).
+Ergonomic utilities for async work that easily cross-compiles for native and browser.
 - Use `PendingResult::new()` to launch a task on your desired runtime (see documentation for details). The `PendingResult` can be used as a join handle on the task. Any errors encountered during your async work will be discarded and replaced with `PRResult::Error`.
 
 This crate is designed for projects that want to ergonomically support WASM targets without sacrificing performance on native builds.
@@ -13,7 +13,6 @@ We provide a custom `release-wasm` profile that enables `panic = "abort"` and op
 
 1. Prep tooling
 - `rustup target install wasm32-unknown-unknown`
-- install [`wasm-opt`](https://github.com/webassembly/binaryen)
 
 2. Build
 ```ignore
@@ -22,6 +21,7 @@ wasm-pack build --target no-modules ./target/ --mode no-install --out-name wasm_
 ```
 
 3. Optimize WASM binary
+- install [`wasm-opt`](https://github.com/webassembly/binaryen)
 - `wasm-opt Os wasm_gen_bg.wasm -o -`
 
 

@@ -43,14 +43,14 @@ mod envmod
     }
 
     impl From<DefaultIOHandle> for tokio::runtime::Handle {
-        fn from(runtime: DefaultIOHandle) -> Self {
-            runtime.0
+        fn from(handle: DefaultIOHandle) -> Self {
+            handle.0
         }
     }
 
     impl From<&DefaultIOHandle> for tokio::runtime::Handle {
-        fn from(runtime: &DefaultIOHandle) -> Self {
-            runtime.0.clone()
+        fn from(handle: &DefaultIOHandle) -> Self {
+            handle.0.clone()
         }
     }
 

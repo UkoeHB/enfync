@@ -12,16 +12,16 @@ use futures::future::FusedFuture;
 #[async_trait::async_trait]
 pub trait ResultReceiver
 {
-    type Runtime;
+    type Spawner;
     type Result: Send + 'static;
 
     /// Make a new result receiver.
-    fn new<F>(runtime: &Self::Runtime, task: F) -> Self
+    fn new<F>(spawner: &Self::Spawner, task: F) -> Self
     where
         F: std::future::Future<Output = Self::Result> + Send + 'static;
 
     /// Make a result receiver with an immediately-available result.
-    fn immediate(runtime: &Self::Runtime, result: Self::Result) -> Self;
+    fn immediate(spawner: &Self::Spawner, result: Self::Result) -> Self;
 
     /// Check if the result is ready.
     fn done(&self) -> bool;
@@ -34,41 +34,41 @@ pub trait ResultReceiver
 //-------------------------------------------------------------------------------------------------------------------
 
 #[derive(Debug)]
-pub struct OneshotResultReceiver<Rt, R>
+pub struct OneshotResultReceiver<S, R>
 {
     oneshot: futures::channel::oneshot::Receiver<Option<R>>,
-    _phantom: std::marker::PhantomData<Rt>,
+    _phantom: std::marker::PhantomData<S>,
 }
 
 #[async_trait::async_trait]
-impl<Rt, R> ResultReceiver for OneshotResultReceiver<Rt, R>
+impl<S, R> ResultReceiver for OneshotResultReceiver<S, R>
 where
-    Rt: OneshotRuntime,
+    S: OneshotSpawner,
     R: Send + 'static
 {
-    type Runtime = Rt;
+    type Spawner = S;
     type Result = R;
 
-    fn new<F>(runtime: &Self::Runtime, task: F) -> Self
+    fn new<F>(spawner: &Self::Spawner, task: F) -> Self
     where
         F: std::future::Future<Output = Self::Result> + Send + 'static,
     {
         let (result_sender, result_receiver) = futures::channel::oneshot::channel();
         let work_task = async move {
-                let result = task.await; //else { let _ = result_sender.send(None); return; };
+                let result = task.await;
                 let _ = result_sender.send(Some(result));
             };
-        runtime.spawn(work_task);
+        spawner.spawn(work_task);
 
-        Self{ oneshot: result_receiver, _phantom: std::marker::PhantomData::<Self::Runtime>::default() }
+        Self{ oneshot: result_receiver, _phantom: std::marker::PhantomData::<Self::Spawner>::default() }
     }
 
-    fn immediate(_runtime: &Self::Runtime, result: Self::Result) -> Self
+    fn immediate(_spawner: &Self::Spawner, result: Self::Result) -> Self
     {
         let (result_sender, result_receiver) = futures::channel::oneshot::channel();
         let _ = result_sender.send(Some(result));
 
-        Self{ oneshot: result_receiver, _phantom: std::marker::PhantomData::<Self::Runtime>::default() }
+        Self{ oneshot: result_receiver, _phantom: std::marker::PhantomData::<Self::Spawner>::default() }
     }
 
     fn done(&self) -> bool
@@ -85,44 +85,44 @@ where
 //-------------------------------------------------------------------------------------------------------------------
 
 #[derive(Debug)]
-pub struct SimpleResultReceiver<Rt: SimpleRuntime<R>, R>
+pub struct SimpleResultReceiver<S: SimpleSpawner<R>, R>
 {
-    handle: <Rt as SimpleRuntime<R>>::Future,
+    future_result: <S as SimpleSpawner<R>>::Future,
 }
 
 #[async_trait::async_trait]
-impl<Rt, R> ResultReceiver for SimpleResultReceiver<Rt, R>
+impl<S, R> ResultReceiver for SimpleResultReceiver<S, R>
 where
-    Rt: SimpleRuntime<R>,
+    S: SimpleSpawner<R>,
     R: Send + 'static,
 {
-    type Runtime = Rt;
+    type Spawner = S;
     type Result = R;
 
-    fn new<F>(runtime: &Self::Runtime, task: F) -> Self
+    fn new<F>(spawner: &Self::Spawner, task: F) -> Self
     where
         F: std::future::Future<Output = Self::Result> + Send + 'static,
     {
-        let handle = runtime.spawn(task);
+        let future_result = spawner.spawn(task);
 
-        Self{ handle }
+        Self{ future_result }
     }
 
-    fn immediate(runtime: &Self::Runtime, result: Self::Result) -> Self
+    fn immediate(spawner: &Self::Spawner, result: Self::Result) -> Self
     {
-        let handle = runtime.spawn(futures::future::ready(result));
+        let future_result = spawner.spawn(futures::future::ready(result));
 
-        Self{ handle }
+        Self{ future_result }
     }
 
     fn done(&self) -> bool
     {
-        Self::Runtime::is_terminated(&self.handle)
+        Self::Spawner::is_terminated(&self.future_result)
     }
 
     async fn get(mut self) -> Option<Self::Result>
     {
-        let Ok(result) = self.handle.await else { return None; };
+        let Ok(result) = self.future_result.await else { return None; };
         Some(result)
     }
 }

@@ -32,18 +32,18 @@ pub struct PendingResult<Recv: ResultReceiver>
 impl<'a, Recv: ResultReceiver + 'a> PendingResult<Recv>
 {
     /// Make a new pending result.
-    pub fn new<F>(runtime: impl Into<&'a Recv::Runtime>, task: F) -> Self
+    pub fn new<F>(spawner: impl Into<&'a Recv::Spawner>, task: F) -> Self
     where
         F: std::future::Future<Output = Recv::Result> + Send + 'static,
     {
-        let result_receiver = Recv::new(runtime.into(), task);
+        let result_receiver = Recv::new(spawner.into(), task);
         Self{ result_receiver: Some(result_receiver) }
     }
 
     /// Make a pending result that is immediately ready.
-    pub fn immediate(runtime: impl Into<&'a Recv::Runtime>, result: Recv::Result) -> Self
+    pub fn immediate(spawner: impl Into<&'a Recv::Spawner>, result: Recv::Result) -> Self
     {
-        let result_receiver = Recv::immediate(runtime.into(), result);
+        let result_receiver = Recv::immediate(spawner.into(), result);
         Self{ result_receiver: Some(result_receiver) }
     }
 
