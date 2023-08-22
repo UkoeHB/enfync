@@ -1,7 +1,7 @@
-# Environment-friendly async (`enfync`)
+# Environment-friendly async (`enfync`)  {INITIAL RELEASE IS WIP}
 
 Ergonomic utilities for async work that easily cross-compiles for native and browser.
-- Use `PendingResult::new()` to launch a task on your desired runtime (see documentation for details). The `PendingResult` can be used as a join handle on the task. Any errors encountered during your async work will be discarded and replaced with `PRResult::Error`.
+- Use `PendingResult::new()` to launch a task on your desired runtime (see documentation for details). The `PendingResult` can be used as a join handle on the task. Any errors encountered during your async work will be discarded and replaced with `enfync::Result::Err`.
 
 This crate is designed for projects that want to ergonomically support WASM targets without sacrificing performance on native builds.
 
@@ -28,7 +28,7 @@ wasm-pack build --target no-modules ./target/ --mode no-install --out-name wasm_
 
 ## Options
 
-- `TOKIO_WORKER_THREADS` (env variable): Default size of IO task pool (native builds only).
+- `TOKIO_WORKER_THREADS` (env variable): Size of default IO task pool (native builds only).
 
 
 

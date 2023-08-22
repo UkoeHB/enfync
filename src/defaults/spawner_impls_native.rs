@@ -9,7 +9,7 @@ use std::fmt::Debug;
 //-------------------------------------------------------------------------------------------------------------------
 
 /// Implements `SimpleSpawner` for `tokio` runtimes (spawn on tokio runtime).
-/// If no other type implements `From<DefaultIOHandle>`, this is the default IO spawner on native builds.
+/// If no other type implements `From<enfync::defaults::IOHandle>`, this is the default IO spawner on native builds.
 #[derive(Debug)]
 pub struct TokioSpawner<R>
 {
@@ -37,12 +37,6 @@ impl<R: Debug + Send + 'static> SimpleSpawner<R> for TokioSpawner<R>
 
 impl<R: Send + 'static> From<tokio::runtime::Runtime> for TokioSpawner<R> {
     fn from(runtime: tokio::runtime::Runtime) -> Self {
-        Self::from(&runtime)
-    }
-}
-
-impl<R: Send + 'static> From<&tokio::runtime::Runtime> for TokioSpawner<R> {
-    fn from(runtime: &tokio::runtime::Runtime) -> Self {
         Self::from(runtime.handle().clone())
     }
 }
@@ -53,28 +47,16 @@ impl<R: Send + 'static> From<tokio::runtime::Handle> for TokioSpawner<R> {
     }
 }
 
-impl<R: Send + 'static> From<&tokio::runtime::Handle> for TokioSpawner<R> {
-    fn from(handle: &tokio::runtime::Handle) -> Self {
-        Self::from(handle.clone())
-    }
-}
-
-impl<R: Send + 'static> From<DefaultIOHandle> for TokioSpawner<R> {
-    fn from(handle: DefaultIOHandle) -> Self {
+impl<R: Send + 'static> From<defaults::IOHandle> for TokioSpawner<R> {
+    fn from(handle: defaults::IOHandle) -> Self {
         Self::from(tokio::runtime::Handle::from(handle))
-    }
-}
-
-impl<R: Send + 'static> From<&DefaultIOHandle> for TokioSpawner<R> {
-    fn from(handle: &DefaultIOHandle) -> Self {
-        Self::from(handle.clone())
     }
 }
 
 //-------------------------------------------------------------------------------------------------------------------
 
 /// Implements `OneshotSpawner` for `std` runtimes (spawn new thread).
-/// If no other type implements `From<DefaultCPUHandle>`, this is the default CPU spawner on native builds.
+/// If no other type implements `From<enfync::defaults::CPUHandle>`, this is the default CPU spawner on native builds.
 #[derive(Debug, Clone, Default)]
 pub struct StdSpawner;
 
@@ -88,16 +70,6 @@ impl OneshotSpawner for StdSpawner
     }
 }
 
-impl From<DefaultCPUHandle> for StdSpawner {
-    fn from(_: DefaultCPUHandle) -> Self {
-        StdSpawner{}
-    }
-}
-
-impl From<&DefaultCPUHandle> for StdSpawner {
-    fn from(_: &DefaultCPUHandle) -> Self {
-        StdSpawner{}
-    }
-}
+impl From<defaults::CPUHandle> for StdSpawner { fn from(_: defaults::CPUHandle) -> Self { StdSpawner{} } }
 
 //-------------------------------------------------------------------------------------------------------------------

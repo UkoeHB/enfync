@@ -1,5 +1,4 @@
 //local shortcuts
-use enfync::*;
 
 //third-party shortcuts
 
@@ -16,10 +15,13 @@ fn pending_result_native_io()
     let task = async { dbg!("task ran"); };
 
     // spawn task
-    let mut pending_result = DefaultIOPendingResult::<()>::new(&DefaultIOHandle::default().into(), task);
+    let mut pending_result = enfync::defaults::IOPendingResult::<()>::new(
+            &enfync::defaults::IOHandle::default().into(),
+            task
+        );
 
     // wait for task
-    let PRResult::Result(_) = pending_result.extract() else { panic!(""); };
+    let enfync::Result::Ok(_) = pending_result.extract() else { panic!(""); };
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -32,10 +34,13 @@ fn pending_result_native_cpu()
     let task = async { dbg!("task ran"); };
 
     // spawn task
-    let mut pending_result = DefaultCPUPendingResult::<()>::new(&DefaultCPUHandle::default().into(), task);
+    let mut pending_result = enfync::defaults::CPUPendingResult::<()>::new(
+            &enfync::defaults::CPUHandle::default().into(),
+            task
+        );
 
     // wait for task
-    let PRResult::Result(_) = pending_result.extract() else { panic!(""); };
+    let enfync::Result::Ok(_) = pending_result.extract() else { panic!(""); };
 }
 
 //-------------------------------------------------------------------------------------------------------------------

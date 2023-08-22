@@ -10,14 +10,14 @@ use crate::*;
 
 /// Result of a 'pending result'.
 #[derive(Debug)]
-pub enum PRResult<R>
+pub enum Result<R>
 {
     /// Result has already been taken.
     Taken,
     /// Result is 'error'.
-    Error,
+    Err,
     /// The successful result.
-    Result(R),
+    Ok(R),
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -69,7 +69,7 @@ impl<'a, Recv: ResultReceiver + 'a> PendingResult<Recv>
 
     /// Extract result if available (non-blocking).
     /// Returns `None` if the result is still pending.
-    pub fn try_extract(&mut self) -> Option<PRResult<Recv::Result>>
+    pub fn try_extract(&mut self) -> Option<Result<Recv::Result>>
     {
         // check if result is pending
         if !self.has_result() && !self.result_receiver.is_none() { return None; }
@@ -79,21 +79,21 @@ impl<'a, Recv: ResultReceiver + 'a> PendingResult<Recv>
     }
 
     /// Extract result (blocking).
-    pub fn extract(&mut self) -> PRResult<Recv::Result>
+    pub fn extract(&mut self) -> Result<Recv::Result>
     {
         futures::executor::block_on(async { self.extract_async().await })
     }
 
     /// Extract result (async).
-    pub async fn extract_async(&mut self) -> PRResult<Recv::Result>
+    pub async fn extract_async(&mut self) -> Result<Recv::Result>
     {
         // consume the result receiver
-        let Some(receiver) = self.result_receiver.take() else { return PRResult::Taken; };
+        let Some(receiver) = self.result_receiver.take() else { return Result::Taken; };
 
         // await thread result
-        let Some(res) = receiver.get().await else { return PRResult::Error; };
+        let Some(res) = receiver.get().await else { return Result::Err; };
 
-        PRResult::Result(res)
+        Result::Ok(res)
     }
 }
 
