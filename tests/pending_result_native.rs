@@ -15,7 +15,7 @@ fn pending_result_native_io()
     let task = async { dbg!("task ran"); };
 
     // spawn task
-    let mut pending_result = enfync::defaults::IOPendingResult::<()>::new(
+    let mut pending_result = enfync::defaults::IOPendingResult::new(
             &enfync::defaults::IOHandle::default().into(),
             task
         );
@@ -34,7 +34,7 @@ fn pending_result_native_cpu()
     let task = async { dbg!("task ran"); };
 
     // spawn task
-    let mut pending_result = enfync::defaults::CPUPendingResult::<()>::new(
+    let mut pending_result = enfync::defaults::CPUPendingResult::new(
             &enfync::defaults::CPUHandle::default().into(),
             task
         );

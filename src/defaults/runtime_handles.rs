@@ -80,7 +80,7 @@ mod envmod
 //-------------------------------------------------------------------------------------------------------------------
 
 /// Default IO runtime handle (native: tokio, wasm: empty).
-pub type IOHandle  = envmod::IOHandle;
+pub type IOHandle = envmod::IOHandle;
 
 /// Default CPU runtime handle (native: empty, wasm: empty).
 pub type CPUHandle = envmod::CPUHandle;
