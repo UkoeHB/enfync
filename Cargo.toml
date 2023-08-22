@@ -2,7 +2,7 @@
 name = "enfync"
 description = "Environment-friendly async utilities"
 authors = ["koe <ukoe@protonmail.com>"]
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 keywords = ["async", "wasm", "native"]
 license = "MIT OR Apache-2.0"
