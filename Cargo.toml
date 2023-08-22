@@ -1,0 +1,47 @@
+[package]
+name = "enfync"
+description = "Environment-friendly async utilities"
+authors = ["koe <ukoe@protonmail.com>"]
+version = "0.1.0"
+edition = "2021"
+keywords = ["async", "wasm", "native"]
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/UkoeHB/enfync"
+
+[dependencies]
+async-trait = { version = "0.1.71" }
+futures     = { version = "0.3.0" }
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+tokio = { version = "1.29.1", features = [ "rt-multi-thread" ] }
+
+[target.'cfg(target_family = "wasm")'.dependencies]
+wasm-bindgen         = { version = "0.2.81" }
+wasm-bindgen-futures = { version = "0.4.37" }
+
+[profile.release]
+lto           = true
+strip         = true    #minimize binary size with symbol stripping
+codegen-units = 1       #maximize performance
+
+[profile.release-small]
+inherits = "release"
+opt-level = "s"
+lto = "fat"
+
+[profile.release-small.package."*"]
+opt-level = "s"
+strip = true
+
+[profile.release-wasm]
+inherits = "release-small"
+panic    = "abort"
+
+[profile.release-wasm.package."*"]
+opt-level = "s"
+strip     = true
+
+[profile.dev-wasm]
+inherits = "dev"
+panic = "abort"
