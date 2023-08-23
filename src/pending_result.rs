@@ -8,16 +8,14 @@ use crate::*;
 
 //-------------------------------------------------------------------------------------------------------------------
 
-/// Result of a 'pending result'.
+/// Error that can be emitted when extracting a `PendingResult`.
 #[derive(Debug)]
-pub enum Result<R>
+pub enum ResultError
 {
     /// Result has already been taken.
     Taken,
-    /// Result is 'error'.
-    Err,
-    /// The successful result.
-    Ok(R),
+    /// The task failed for some reason.
+    TaskFailure,
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -69,7 +67,7 @@ impl<'a, Recv: ResultReceiver + 'a> PendingResult<Recv>
 
     /// Extract result if available (non-blocking).
     /// Returns `None` if the result is still pending.
-    pub fn try_extract(&mut self) -> Option<Result<Recv::Result>>
+    pub fn try_extract(&mut self) -> Option<Result<Recv::Result, ResultError>>
     {
         // check if result is pending
         if !self.has_result() && !self.result_receiver.is_none() { return None; }
@@ -79,21 +77,21 @@ impl<'a, Recv: ResultReceiver + 'a> PendingResult<Recv>
     }
 
     /// Extract result (blocking).
-    pub fn extract(&mut self) -> Result<Recv::Result>
+    pub fn extract(&mut self) -> Result<Recv::Result, ResultError>
     {
         futures::executor::block_on(async { self.extract_async().await })
     }
 
     /// Extract result (async).
-    pub async fn extract_async(&mut self) -> Result<Recv::Result>
+    pub async fn extract_async(&mut self) -> Result<Recv::Result, ResultError>
     {
         // consume the result receiver
-        let Some(receiver) = self.result_receiver.take() else { return Result::Taken; };
+        let Some(receiver) = self.result_receiver.take() else { return Err(ResultError::Taken); };
 
         // await thread result
-        let Some(res) = receiver.get().await else { return Result::Err; };
+        let Some(res) = receiver.get().await else { return Err(ResultError::TaskFailure); };
 
-        Result::Ok(res)
+        Ok(res)
     }
 }
 

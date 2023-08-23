@@ -12,7 +12,8 @@ fn pending_result_native_io()
 {
     // make cpu-oriented task
     dbg!("task");
-    let task = async { dbg!("task ran"); };
+    let val = 10;
+    let task = async move { dbg!("task ran"); val };
 
     // spawn task
     let mut pending_result = enfync::defaults::IOPendingResult::new(
@@ -21,7 +22,8 @@ fn pending_result_native_io()
         );
 
     // wait for task
-    let enfync::Result::Ok(_) = pending_result.extract() else { panic!(""); };
+    let Ok(res) = pending_result.extract() else { panic!(""); };
+    assert_eq!(res, val);
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -31,7 +33,8 @@ fn pending_result_native_cpu()
 {
     // make cpu-oriented task
     dbg!("task");
-    let task = async { dbg!("task ran"); };
+    let val = 10;
+    let task = async move { dbg!("task ran"); val };
 
     // spawn task
     let mut pending_result = enfync::defaults::CPUPendingResult::new(
@@ -40,7 +43,8 @@ fn pending_result_native_cpu()
         );
 
     // wait for task
-    let enfync::Result::Ok(_) = pending_result.extract() else { panic!(""); };
+    let Ok(res) = pending_result.extract() else { panic!(""); };
+    assert_eq!(res, val);
 }
 
 //-------------------------------------------------------------------------------------------------------------------
