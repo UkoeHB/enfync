@@ -13,7 +13,7 @@ mod envmod
 {
     use crate::*;
 
-    /// Default IO runtime handle (tokio).
+    /// Built-in IO runtime handle (tokio).
     /// If you access this via `::default()`, you will get a handle to a statically-initialized tokio runtime.
     #[derive(Clone, Debug)]
     pub struct IOHandle(pub tokio::runtime::Handle);
@@ -48,7 +48,7 @@ mod envmod
     impl From<tokio::runtime::Handle> for IOHandle
     { fn from(handle: tokio::runtime::Handle) -> Self { Self(handle) } }
 
-    /// Default CPU runtime handle (unspecified)
+    /// Built-in CPU runtime handle (unspecified)
     #[derive(Default)]
     pub struct CPUHandle;
 
@@ -63,13 +63,13 @@ mod envmod
 {
     use crate::*;
 
-    /// Default IO runtime handle (unspecified)
+    /// Built-in IO runtime handle (unspecified)
     #[derive(Clone, Debug, Default)]
     pub struct IOHandle;
 
     impl TryAdopt for IOHandle { fn try_adopt() -> Option<IOHandle> { Some(IOHandle) } }
 
-    /// Default CPU runtime handle (unspecified)
+    /// Built-in CPU runtime handle (unspecified)
     #[derive(Clone, Debug, Default)]
     pub struct CPUHandle;
 
@@ -79,10 +79,10 @@ mod envmod
 //-------------------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------------------
 
-/// Default IO runtime handle (native: tokio, wasm: empty).
+/// Built-in IO runtime handle (native: tokio, wasm: empty).
 pub type IOHandle = envmod::IOHandle;
 
-/// Default CPU runtime handle (native: empty, wasm: empty).
+/// Built-in CPU runtime handle (native: empty, wasm: empty).
 pub type CPUHandle = envmod::CPUHandle;
 
 //-------------------------------------------------------------------------------------------------------------------

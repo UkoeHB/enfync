@@ -1,5 +1,5 @@
 //local shortcuts
-use crate::{defaults, *};
+use crate::{builtin, *};
 
 //third-party shortcuts
 
@@ -9,8 +9,8 @@ use crate::{defaults, *};
 //-------------------------------------------------------------------------------------------------------------------
 
 /// Implements `OneshotSpawner` for `wasm` runtimes (spawn on local thread).
-/// If no other type implements `From<enfync::defaults::IOHandle>`, this is the default IO spawner on WASM builds.
-/// If no other type implements `From<enfync::defaults::CPUHandle>`, this is the default CPU spawner on WASM builds.
+/// If no other type implements `From<enfync::builtin::IOHandle>`, this is the default IO spawner on WASM builds.
+/// If no other type implements `From<enfync::builtin::CPUHandle>`, this is the default CPU spawner on WASM builds.
 #[derive(Debug, Clone, Default)]
 pub struct WasmIOSpawner;
 
@@ -28,7 +28,7 @@ impl OneshotSpawner for WasmIOSpawner
     }
 }
 
-impl From<defaults::IOHandle>  for WasmIOSpawner { fn from(_: defaults::IOHandle)  -> Self { WasmIOSpawner{} } }
-impl From<defaults::CPUHandle> for WasmIOSpawner { fn from(_: defaults::CPUHandle) -> Self { WasmIOSpawner{} } }
+impl From<builtin::IOHandle>  for WasmIOSpawner { fn from(_: builtin::IOHandle)  -> Self { WasmIOSpawner{} } }
+impl From<builtin::CPUHandle> for WasmIOSpawner { fn from(_: builtin::CPUHandle) -> Self { WasmIOSpawner{} } }
 
 //-------------------------------------------------------------------------------------------------------------------

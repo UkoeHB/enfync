@@ -2,7 +2,7 @@
 #![doc = include_str!("../README.md")]
 
 //module tree
-pub mod defaults;
+pub mod builtin;
 mod pending_result;
 mod result_receiver;
 mod runtime_handles;
