@@ -70,7 +70,7 @@ impl<'a, Recv: ResultReceiver + 'a> PendingResult<Recv>
     pub fn try_extract(&mut self) -> Option<Result<Recv::Result, ResultError>>
     {
         // check if result is pending
-        if !self.has_result() && !self.result_receiver.is_none() { return None; }
+        if !self.has_result() && self.result_receiver.is_some() { return None; }
 
         // extract thread result
         Some(self.extract())

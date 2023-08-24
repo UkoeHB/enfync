@@ -7,6 +7,11 @@ This crate is designed for projects that want to ergonomically support WASM targ
 
 
 
+## Requirements
+
+1. WASM builds: use CLI flag `-Ctarget-feature=+atomics`
+
+
 ## Recommended WASM Build
 
 We provide a custom `release-wasm` profile that enables `panic = "abort"` and optimizes for small binaries. There is a corresponding `dev-wasm` profile that enables `panic = "abort"`.
@@ -16,7 +21,7 @@ We provide a custom `release-wasm` profile that enables `panic = "abort"` and op
 
 2. Build
 ```ignore
-cargo build --release-wasm --target wasm32-unknown-unknown &&
+cargo build --release-wasm --target wasm32-unknown-unknown -O -Ctarget-feature=+atomics &&
 wasm-pack build --target no-modules ./target/ --mode no-install --out-name wasm_gen
 ```
 

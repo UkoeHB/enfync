@@ -4,8 +4,8 @@ use crate::*;
 //third-party shortcuts
 
 //standard shortcuts
-use futures::future::FusedFuture;
-
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 
 //-------------------------------------------------------------------------------------------------------------------
 
@@ -36,6 +36,7 @@ pub trait ResultReceiver
 #[derive(Debug)]
 pub struct OneshotResultReceiver<S, R>
 {
+    done_flag: Arc<AtomicBool>,
     oneshot: futures::channel::oneshot::Receiver<Option<R>>,
     _phantom: std::marker::PhantomData<S>,
 }
@@ -53,27 +54,31 @@ where
     where
         F: std::future::Future<Output = Self::Result> + Send + 'static,
     {
+        let done_flag = Arc::new(AtomicBool::new(false));
+        let done_flag_clone = done_flag.clone();
         let (result_sender, result_receiver) = futures::channel::oneshot::channel();
         let work_task = async move {
                 let result = task.await;
                 let _ = result_sender.send(Some(result));
+                done_flag_clone.store(true, Ordering::Release);
             };
         spawner.spawn(work_task);
 
-        Self{ oneshot: result_receiver, _phantom: std::marker::PhantomData::<Self::Spawner>::default() }
+        Self{ done_flag, oneshot: result_receiver, _phantom: std::marker::PhantomData::<Self::Spawner>::default() }
     }
 
     fn immediate(_spawner: &Self::Spawner, result: Self::Result) -> Self
     {
+        let done_flag = Arc::new(AtomicBool::new(true));
         let (result_sender, result_receiver) = futures::channel::oneshot::channel();
         let _ = result_sender.send(Some(result));
 
-        Self{ oneshot: result_receiver, _phantom: std::marker::PhantomData::<Self::Spawner>::default() }
+        Self{ done_flag, oneshot: result_receiver, _phantom: std::marker::PhantomData::<Self::Spawner>::default() }
     }
 
     fn done(&self) -> bool
     {
-        self.oneshot.is_terminated()
+        self.done_flag.load(Ordering::Acquire)
     }
 
     async fn get(mut self) -> Option<Self::Result>
