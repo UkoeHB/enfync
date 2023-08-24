@@ -36,9 +36,11 @@ mod envmod
 //-------------------------------------------------------------------------------------------------------------------
 
 /// Built-in IO pending result uses default IO receiver (native: tokio, wasm: local spawn).
-pub type IOPendingResult<R> = PendingResult<envmod::IOReceiver<R>>;
+pub type IOReceiver<R> = envmod::IOReceiver<R>;
+pub type IOPendingResult<R> = PendingResult<IOReceiver<R>>;
 
 /// Built-in CPU pending result uses default CPU receiver (native: std::thread, wasm: local spawn).
-pub type CPUPendingResult<R> = PendingResult<envmod::CPUReceiver<R>>;
+pub type CPUReceiver<R> = envmod::CPUReceiver<R>;
+pub type CPUPendingResult<R> = PendingResult<CPUReceiver<R>>;
 
 //-------------------------------------------------------------------------------------------------------------------
