@@ -24,13 +24,13 @@ pub enum ResultError
 #[derive(Debug)]
 pub struct PendingResult<R>
 {
-    result_receiver: Option<Box<dyn ResultReceiver<Result = R> + Send>>,
+    result_receiver: Option<Box<dyn ResultReceiver<Result = R> + Send + Sync>>,
 }
 
-impl<R: Debug + Send + 'static> PendingResult<R>
+impl<R: Debug + Send + Sync + 'static> PendingResult<R>
 {
     /// Make a new pending result
-    pub fn new(receiver: impl ResultReceiver<Result = R> + 'static) -> Self
+    pub fn new(receiver: impl ResultReceiver<Result = R> + Send + Sync + 'static) -> Self
     {
         Self{ result_receiver: Some(Box::new(receiver)) }
     }
@@ -38,7 +38,7 @@ impl<R: Debug + Send + 'static> PendingResult<R>
     /// Make a pending result that is immediately ready.
     pub fn ready(result: R) -> Self
     {
-        Self{ result_receiver: Some(Box::new(ImmedateResultReceiver::new(async move { result }))) }
+        Self{ result_receiver: Some(Box::new(ImmedateResultReceiver::new(result))) }
     }
 
     /// Check if result is available.

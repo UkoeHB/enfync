@@ -11,9 +11,9 @@ use std::sync::Arc;
 //-------------------------------------------------------------------------------------------------------------------
 
 #[async_trait::async_trait]
-pub trait ResultReceiver: Debug + Send
+pub trait ResultReceiver: Debug
 {
-    type Result: Send + 'static;
+    type Result: Send + Sync + 'static;
 
     /// Check if the result is ready.
     fn done(&self) -> bool;
@@ -36,8 +36,8 @@ pub struct OneshotResultReceiver<S, R: Debug>
 #[async_trait::async_trait]
 impl<S, R> ResultReceiver for OneshotResultReceiver<S, R>
 where
-    S: Debug + Send + 'static,
-    R: Debug + Send + 'static
+    S: Debug + Send + Sync + 'static,
+    R: Debug + Send + Sync + 'static
 {
     type Result = R;
 
@@ -55,7 +55,7 @@ where
 impl<S, R> OneshotResultReceiver<S, R>
 where
     S: Debug + OneshotSpawner,
-    R: Debug + Send + 'static
+    R: Debug + Send + Sync + 'static
 {
     pub fn new<F>(spawner: &S, task: F) -> Self
     where
@@ -87,7 +87,7 @@ pub struct SimpleResultReceiver<S: SimpleSpawner<R>, R: Debug>
 impl<S, R> ResultReceiver for SimpleResultReceiver<S, R>
 where
     S: SimpleSpawner<R>,
-    R: Debug + Send + 'static,
+    R: Debug + Send + Sync + 'static,
 {
     type Result = R;
 
@@ -106,7 +106,7 @@ where
 impl<S, R> SimpleResultReceiver<S, R>
 where
     S: SimpleSpawner<R>,
-    R: Debug + Send + 'static,
+    R: Debug + Send + Sync + 'static,
 {
     pub fn new<F>(spawner: &S, task: F) -> Self
     where
@@ -127,7 +127,7 @@ pub struct ImmedateResultReceiver<R: Debug>
 }
 
 #[async_trait::async_trait]
-impl<R: Debug + Send + 'static> ResultReceiver for ImmedateResultReceiver<R>
+impl<R: Debug + Send + Sync + 'static> ResultReceiver for ImmedateResultReceiver<R>
 {
     type Result = R;
 
@@ -144,12 +144,8 @@ impl<R: Debug + Send + 'static> ResultReceiver for ImmedateResultReceiver<R>
 
 impl<R: Debug> ImmedateResultReceiver<R>
 {
-    pub fn new<F>(task: F) -> Self
-    where
-        F: std::future::Future<Output = R> + Send + 'static,
+    pub fn new(result: R) -> Self
     {
-        let result = futures::executor::block_on(task);
-
         Self{ result }
     }
 }

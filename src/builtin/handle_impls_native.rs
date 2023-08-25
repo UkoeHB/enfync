@@ -18,7 +18,7 @@ impl Handle for IOHandle
 {
     fn spawn<R, F>(&self, task: F) -> PendingResult<R>
     where
-        R: Debug + Send + 'static,
+        R: Debug + Send + Sync + 'static,
         F: Future<Output = R> + Send + 'static
     {
         let spawner = TokioSpawner::<R>::from(self.0.clone());
@@ -67,7 +67,7 @@ impl Handle for CPUHandle
 {
     fn spawn<R, F>(&self, task: F) -> PendingResult<R>
     where
-        R: Debug + Send + 'static,
+        R: Debug + Send + Sync + 'static,
         F: Future<Output = R> + Send + 'static
     {
         let result_receiver = OneshotResultReceiver::new(&StdSpawner{}, task);

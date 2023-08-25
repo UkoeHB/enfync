@@ -16,7 +16,7 @@ pub struct TokioSpawner<R>
     _phantom: std::marker::PhantomData<R>,
 }
 
-impl<R: Debug + Send + 'static> SimpleSpawner<R> for TokioSpawner<R>
+impl<R: Debug + Send + Sync + 'static> SimpleSpawner<R> for TokioSpawner<R>
 {
     type Error = tokio::task::JoinError;
     type Future = tokio::task::JoinHandle<R>;

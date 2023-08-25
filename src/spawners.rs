@@ -7,7 +7,7 @@ use std::fmt::Debug;
 
 //-------------------------------------------------------------------------------------------------------------------
 
-pub trait OneshotSpawner: Debug + Send + 'static
+pub trait OneshotSpawner: Debug + Send + Sync + 'static
 {
     fn spawn<F>(&self, task: F)
     where
@@ -16,7 +16,7 @@ pub trait OneshotSpawner: Debug + Send + 'static
 
 //-------------------------------------------------------------------------------------------------------------------
 
-pub trait SimpleSpawner<R>: Debug + Send + 'static
+pub trait SimpleSpawner<R>: Debug + Send + Sync + 'static
 {
     type Error;
     type Future: std::future::Future<Output = Result<R, Self::Error>> + Debug + Send + 'static;

@@ -12,7 +12,7 @@ pub trait Handle: Default + TryAdopt
 {
     fn spawn<R, F>(&self, task: F) -> PendingResult<R>
     where
-        R: Debug + Send + 'static,
+        R: Debug + Send + Sync + 'static,
         F: std::future::Future<Output = R> + Send + 'static;
 }
 
