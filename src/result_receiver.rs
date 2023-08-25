@@ -11,7 +11,7 @@ use std::sync::Arc;
 //-------------------------------------------------------------------------------------------------------------------
 
 #[async_trait::async_trait]
-pub trait ResultReceiver: Debug
+pub trait ResultReceiver: Debug + Send
 {
     type Result: Send + 'static;
 
