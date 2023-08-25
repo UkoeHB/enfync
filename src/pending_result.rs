@@ -24,7 +24,7 @@ pub enum ResultError
 #[derive(Debug)]
 pub struct PendingResult<R>
 {
-    result_receiver: Option<Box<dyn ResultReceiver<Result = R>>>,
+    result_receiver: Option<Box<dyn ResultReceiver<Result = R> + Send>>,
 }
 
 impl<R: Debug + Send + 'static> PendingResult<R>
