@@ -26,7 +26,4 @@ impl OneshotSpawner for WasmIOSpawner
     }
 }
 
-impl From<builtin::IOHandle>  for WasmIOSpawner { fn from(_: builtin::IOHandle)  -> Self { WasmIOSpawner{} } }
-impl From<builtin::CPUHandle> for WasmIOSpawner { fn from(_: builtin::CPUHandle) -> Self { WasmIOSpawner{} } }
-
 //-------------------------------------------------------------------------------------------------------------------

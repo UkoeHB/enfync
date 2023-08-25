@@ -1,9 +1,20 @@
 //local shortcuts
+use crate::*;
 
 //third-party shortcuts
 
 //standard shortcuts
+use std::fmt::Debug;
 
+//-------------------------------------------------------------------------------------------------------------------
+
+pub trait Handle: Default + TryAdopt
+{
+    fn spawn<R, F>(&self, task: F) -> PendingResult<R>
+    where
+        R: Debug + Send + 'static,
+        F: std::future::Future<Output = R> + Send + 'static;
+}
 
 //-------------------------------------------------------------------------------------------------------------------
 

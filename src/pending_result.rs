@@ -4,7 +4,7 @@ use crate::*;
 //third-party shortcuts
 
 //standard shortcuts
-
+use std::fmt::Debug;
 
 //-------------------------------------------------------------------------------------------------------------------
 
@@ -24,21 +24,21 @@ pub enum ResultError
 #[derive(Debug)]
 pub struct PendingResult<R>
 {
-    result_receiver: Option<Box<dyn ResultReceiver<Result = R, Spawner = _>>>,
+    result_receiver: Option<Box<dyn ResultReceiver<Result = R>>>,
 }
 
-impl<R> PendingResult<R>
+impl<R: Debug + Send + 'static> PendingResult<R>
 {
     /// Make a new pending result
-    pub fn new(receiver: impl ResultReceiver<Result = R>) -> Self
+    pub fn new(receiver: impl ResultReceiver<Result = R> + 'static) -> Self
     {
-        Self{ result_receiver: Box::new(receiver) }
+        Self{ result_receiver: Some(Box::new(receiver)) }
     }
 
     /// Make a pending result that is immediately ready.
     pub fn ready(result: R) -> Self
     {
-        Self{ result_receiver: Box::new(ImmedateResultReceiver::new(&(), async move { result })) }
+        Self{ result_receiver: Some(Box::new(ImmedateResultReceiver::new(async move { result }))) }
     }
 
     /// Check if result is available.
@@ -89,18 +89,6 @@ impl<R> PendingResult<R>
 
         Ok(res)
     }
-}
-
-//-------------------------------------------------------------------------------------------------------------------
-
-/// Spawn a task.
-pub fn spawn<S, Recv, F>(spawner: &S, task: F) -> PendingResult<Recv::Result>
-where
-    S: Into<Recv::Spawner>,
-    Recv: ResultReceiver + From<S>,
-    F: std::future::Future<Output = Recv::Result> + Send + 'static,
-{
-    PendingResult::<Recv::Result>::new(Recv::new(spawner.into(), task))
 }
 
 //-------------------------------------------------------------------------------------------------------------------

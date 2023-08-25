@@ -1,17 +1,13 @@
 //local shortcuts
 
 //third-party shortcuts
-use enfync::*;
 
 //standard shortcuts
 
 
 //-------------------------------------------------------------------------------------------------------------------
 
-fn basic_extract<Recv, H>()
-where
-    Recv: ResultReceiver<Result = i32>,
-    H: Into<<Recv as ResultReceiver>::Spawner> + Default,
+fn basic_extract<H: enfync::Handle>()
 {
     // make task
     dbg!("test: basic_extract");
@@ -19,7 +15,7 @@ where
     let task = async move { dbg!("task ran"); val };
 
     // spawn task
-    let mut pending_result = PendingResult::<Recv>::new(&H::default().into(), task);
+    let mut pending_result = H::default().spawn(task);
 
     // wait for task
     let Ok(res) = pending_result.extract() else { panic!(""); };
@@ -28,10 +24,7 @@ where
 
 //-------------------------------------------------------------------------------------------------------------------
 
-fn basic_try_extract<Recv, H>()
-where
-    Recv: ResultReceiver<Result = i32>,
-    H: Into<<Recv as ResultReceiver>::Spawner> + Default,
+fn basic_try_extract<H: enfync::Handle>()
 {
     // make task
     dbg!("test: basic_try_extract");
@@ -39,7 +32,7 @@ where
     let task = async move { dbg!("task ran"); val };
 
     // spawn task
-    let mut pending_result = PendingResult::<Recv>::new(&H::default().into(), task);
+    let mut pending_result = H::default().spawn(task);
 
     // wait for async machinery
     std::thread::sleep(std::time::Duration::from_millis(15));
@@ -51,13 +44,10 @@ where
 
 //-------------------------------------------------------------------------------------------------------------------
 
-fn test_suite_impl<Recv, H>()
-where
-    Recv: ResultReceiver<Result = i32>,
-    H: Into<<Recv as ResultReceiver>::Spawner> + Default,
+fn test_suite_impl<H: enfync::Handle>()
 {
-    basic_extract::<Recv, H>();
-    basic_try_extract::<Recv, H>();
+    basic_extract::<H>();
+    basic_try_extract::<H>();
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -65,9 +55,9 @@ where
 fn test_suite()
 {
     dbg!("test suite IO");
-    test_suite_impl::<enfync::builtin::IOReceiver::<i32>, enfync::builtin::IOHandle>();
+    test_suite_impl::<enfync::builtin::IOHandle>();
     dbg!("test suite CPU");
-    test_suite_impl::<enfync::builtin::CPUReceiver::<i32>, enfync::builtin::CPUHandle>();
+    test_suite_impl::<enfync::builtin::CPUHandle>();
 
     dbg!("test suite MIXED");
     //todo
