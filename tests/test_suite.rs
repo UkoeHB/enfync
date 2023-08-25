@@ -44,10 +44,30 @@ fn basic_try_extract<H: enfync::Handle>()
 
 //-------------------------------------------------------------------------------------------------------------------
 
+fn basic_nesting<H: enfync::Handle>()
+{
+    // make task
+    dbg!("test: basic_extract");
+    let val = 10;
+    let task = async move { dbg!("task ran"); val };
+
+    // spawn task
+    let mut pending_result = H::default().spawn(task);
+
+    // make new task waiting for other task
+    let mut pending_result = H::default().spawn(async move { pending_result.extract_async().await });
+
+    let Ok(Ok(res)) = pending_result.extract() else { panic!(""); };
+    assert_eq!(res, val);
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+
 fn test_suite_impl<H: enfync::Handle>()
 {
     basic_extract::<H>();
     basic_try_extract::<H>();
+    basic_nesting::<H>();
 }
 
 //-------------------------------------------------------------------------------------------------------------------
