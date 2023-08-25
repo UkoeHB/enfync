@@ -20,9 +20,6 @@ pub trait ResultReceiver
     where
         F: std::future::Future<Output = Self::Result> + Send + 'static;
 
-    /// Make a result receiver with an immediately-available result.
-    fn immediate(spawner: &Self::Spawner, result: Self::Result) -> Self;
-
     /// Check if the result is ready.
     fn done(&self) -> bool;
 
@@ -67,15 +64,6 @@ where
         Self{ done_flag, oneshot: result_receiver, _phantom: std::marker::PhantomData::<Self::Spawner>::default() }
     }
 
-    fn immediate(_spawner: &Self::Spawner, result: Self::Result) -> Self
-    {
-        let done_flag = Arc::new(AtomicBool::new(true));
-        let (result_sender, result_receiver) = futures::channel::oneshot::channel();
-        let _ = result_sender.send(Some(result));
-
-        Self{ done_flag, oneshot: result_receiver, _phantom: std::marker::PhantomData::<Self::Spawner>::default() }
-    }
-
     fn done(&self) -> bool
     {
         self.done_flag.load(Ordering::Acquire)
@@ -113,13 +101,6 @@ where
         Self{ future_result }
     }
 
-    fn immediate(spawner: &Self::Spawner, result: Self::Result) -> Self
-    {
-        let future_result = spawner.spawn(futures::future::ready(result));
-
-        Self{ future_result }
-    }
-
     fn done(&self) -> bool
     {
         Self::Spawner::is_terminated(&self.future_result)
@@ -129,6 +110,40 @@ where
     {
         let Ok(result) = self.future_result.await else { return None; };
         Some(result)
+    }
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+
+#[derive(Debug)]
+pub struct ImmedateResultReceiver<R>
+{
+    result: R,
+}
+
+#[async_trait::async_trait]
+impl<R> ResultReceiver for ImmedateResultReceiver<R>
+{
+    type Spawner = ();
+    type Result = R;
+
+    fn new<F>(_: &(), task: F) -> Self
+    where
+        F: std::future::Future<Output = Self::Result> + Send + 'static,
+    {
+        let result = futures::executor::block_on(task);
+
+        Self{ result }
+    }
+
+    fn done(&self) -> bool
+    {
+        true
+    }
+
+    async fn get(mut self) -> Option<Self::Result>
+    {
+        Some(self.result)
     }
 }
 

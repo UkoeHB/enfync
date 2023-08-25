@@ -9,7 +9,6 @@ use std::fmt::Debug;
 //-------------------------------------------------------------------------------------------------------------------
 
 /// Implements `SimpleSpawner` for `tokio` runtimes (spawn on tokio runtime).
-/// If no other type implements `From<enfync::builtin::IOHandle>`, this is the default IO spawner on native builds.
 #[derive(Debug)]
 pub struct TokioSpawner<R>
 {
@@ -56,7 +55,6 @@ impl<R: Send + 'static> From<builtin::IOHandle> for TokioSpawner<R> {
 //-------------------------------------------------------------------------------------------------------------------
 
 /// Implements `OneshotSpawner` for `std` runtimes (spawn new thread).
-/// If no other type implements `From<enfync::builtin::CPUHandle>`, this is the default CPU spawner on native builds.
 #[derive(Debug, Clone, Default)]
 pub struct StdSpawner;
 

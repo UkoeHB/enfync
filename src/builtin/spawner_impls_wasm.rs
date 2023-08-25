@@ -9,8 +9,6 @@ use crate::{builtin, *};
 //-------------------------------------------------------------------------------------------------------------------
 
 /// Implements `OneshotSpawner` for `wasm` runtimes (spawn on local thread).
-/// If no other type implements `From<enfync::builtin::IOHandle>`, this is the default IO spawner on WASM builds.
-/// If no other type implements `From<enfync::builtin::CPUHandle>`, this is the default CPU spawner on WASM builds.
 #[derive(Debug, Clone, Default)]
 pub struct WasmIOSpawner;
 

@@ -22,27 +22,23 @@ pub enum ResultError
 
 /// The pending result of async work.
 #[derive(Debug)]
-pub struct PendingResult<Recv: ResultReceiver>
+pub struct PendingResult<R>
 {
-    result_receiver: Option<Recv>,
+    result_receiver: Option<Box<dyn ResultReceiver<Result = R, Spawner = _>>>,
 }
 
-impl<'a, Recv: ResultReceiver + 'a> PendingResult<Recv>
+impl<R> PendingResult<R>
 {
-    /// Make a new pending result.
-    pub fn new<F>(spawner: impl Into<&'a Recv::Spawner>, task: F) -> Self
-    where
-        F: std::future::Future<Output = Recv::Result> + Send + 'static,
+    /// Make a new pending result
+    pub fn new(receiver: impl ResultReceiver<Result = R>) -> Self
     {
-        let result_receiver = Recv::new(spawner.into(), task);
-        Self{ result_receiver: Some(result_receiver) }
+        Self{ result_receiver: Box::new(receiver) }
     }
 
     /// Make a pending result that is immediately ready.
-    pub fn immediate(spawner: impl Into<&'a Recv::Spawner>, result: Recv::Result) -> Self
+    pub fn ready(result: R) -> Self
     {
-        let result_receiver = Recv::immediate(spawner.into(), result);
-        Self{ result_receiver: Some(result_receiver) }
+        Self{ result_receiver: Box::new(ImmedateResultReceiver::new(&(), async move { result })) }
     }
 
     /// Check if result is available.
@@ -67,7 +63,7 @@ impl<'a, Recv: ResultReceiver + 'a> PendingResult<Recv>
 
     /// Extract result if available (non-blocking).
     /// Returns `None` if the result is still pending.
-    pub fn try_extract(&mut self) -> Option<Result<Recv::Result, ResultError>>
+    pub fn try_extract(&mut self) -> Option<Result<R, ResultError>>
     {
         // check if result is pending
         if !self.has_result() && self.result_receiver.is_some() { return None; }
@@ -77,13 +73,13 @@ impl<'a, Recv: ResultReceiver + 'a> PendingResult<Recv>
     }
 
     /// Extract result (blocking).
-    pub fn extract(&mut self) -> Result<Recv::Result, ResultError>
+    pub fn extract(&mut self) -> Result<R, ResultError>
     {
         futures::executor::block_on(async { self.extract_async().await })
     }
 
     /// Extract result (async).
-    pub async fn extract_async(&mut self) -> Result<Recv::Result, ResultError>
+    pub async fn extract_async(&mut self) -> Result<R, ResultError>
     {
         // consume the result receiver
         let Some(receiver) = self.result_receiver.take() else { return Err(ResultError::Taken); };
@@ -93,6 +89,18 @@ impl<'a, Recv: ResultReceiver + 'a> PendingResult<Recv>
 
         Ok(res)
     }
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+
+/// Spawn a task.
+pub fn spawn<S, Recv, F>(spawner: &S, task: F) -> PendingResult<Recv::Result>
+where
+    S: Into<Recv::Spawner>,
+    Recv: ResultReceiver + From<S>,
+    F: std::future::Future<Output = Recv::Result> + Send + 'static,
+{
+    PendingResult::<Recv::Result>::new(Recv::new(spawner.into(), task))
 }
 
 //-------------------------------------------------------------------------------------------------------------------
