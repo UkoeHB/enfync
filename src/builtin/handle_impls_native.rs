@@ -35,7 +35,7 @@ impl Default for Handle
 
         let runtime = RUNTIME.get_or_init(
                 || {
-                    tokio::runtime::Runtime::new().expect("unable to get default tokio runtime")
+                    tokio::runtime::Runtime::new().expect("unable to make default tokio runtime")
                 }
             );
         Handle(runtime.handle().clone())
