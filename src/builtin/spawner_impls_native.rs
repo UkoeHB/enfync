@@ -47,3 +47,21 @@ impl<R: Send + 'static> From<tokio::runtime::Handle> for TokioSpawner<R> {
 }
 
 //-------------------------------------------------------------------------------------------------------------------
+
+/// Implements `OneshotSpawner` for `std` runtimes (spawn new thread).
+#[derive(Debug, Clone, Default)]
+pub struct StdSpawner;
+
+impl OneshotSpawner for StdSpawner
+{
+    fn spawn<F>(&self, task: F)
+    where
+        F: std::future::Future<Output = ()> + Send + 'static,
+    {
+        std::thread::spawn(move || futures::executor::block_on(async move { task.await }));
+    }
+}
+
+impl From<builtin::CPUHandle> for StdSpawner { fn from(_: builtin::CPUHandle) -> Self { StdSpawner{} } }
+
+//-------------------------------------------------------------------------------------------------------------------

@@ -58,3 +58,23 @@ impl From<tokio::runtime::Handle> for Handle
 { fn from(handle: tokio::runtime::Handle) -> Self { Self(handle) } }
 
 //-------------------------------------------------------------------------------------------------------------------
+
+/// Built-in CPU runtime handle (std threads)
+#[derive(Default)]
+pub struct CPUHandle;
+
+impl HandleTrait for CPUHandle
+{
+    fn spawn<R, F>(&self, task: F) -> PendingResult<R>
+    where
+        R: Debug + Send + Sync + 'static,
+        F: Future<Output = R> + Send + 'static
+    {
+        let result_receiver = OneshotResultReceiver::new(&StdSpawner{}, task);
+        PendingResult::new(result_receiver)
+    }
+}
+
+impl TryAdopt for CPUHandle { fn try_adopt() -> Option<CPUHandle> { Some(CPUHandle) } }
+
+//-------------------------------------------------------------------------------------------------------------------
