@@ -69,25 +69,21 @@ impl<R: Debug + Send + Sync + 'static> PendingResult<R>
         if !self.has_result() && self.result_receiver.is_some() { return None; }
 
         // extract thread result
-        Some(self.extract())
-    }
-
-    /// Extract result (blocking).
-    pub fn extract(&mut self) -> Result<R, ResultError>
-    {
-        futures::executor::block_on(async { self.extract_async().await })
+        match &mut self.result_receiver
+        {
+            Some(receiver) => receiver.try_get(),
+            None           => Some(Err(ResultError::Taken)),
+        }
     }
 
     /// Extract result (async).
-    pub async fn extract_async(&mut self) -> Result<R, ResultError>
+    pub async fn extract(&mut self) -> Result<R, ResultError>
     {
         // consume the result receiver
         let Some(receiver) = self.result_receiver.take() else { return Err(ResultError::Taken); };
 
         // await thread result
-        let Some(res) = receiver.get().await else { return Err(ResultError::TaskFailure); };
-
-        Ok(res)
+        receiver.get().await
     }
 }
 

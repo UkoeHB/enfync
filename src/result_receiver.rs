@@ -4,7 +4,9 @@ use crate::*;
 //third-party shortcuts
 
 //standard shortcuts
+use futures::future::{FusedFuture, MaybeDone};
 use std::fmt::Debug;
+use std::pin::Pin;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
@@ -16,20 +18,30 @@ pub trait ResultReceiver: Debug
     type Result: Send + Sync + 'static;
 
     /// Check if the result is ready.
+    /// This is **not** guaranteed to synchronize with a successful call to `try_get()` or `get()`.
     fn done(&self) -> bool;
 
+    /// Try to get a result.
+    /// Return `None` if the result is not available.
+    /// Return `Some(Err)` if the result could not be extracted (e.g. due to an error OR due to the result already
+    /// having been extracted.
+    fn try_get(&mut self) -> Option<Result<Self::Result, ResultError>>;
+
     /// Get the result.
-    /// Return `None` if the result could not be extracted (e.g. due to an error).
-    async fn get(self: Box<Self>) -> Option<Self::Result>;
+    /// Return `Err` if the result could not be extracted (e.g. due to an error OR due to the result already
+    /// having been extracted.
+    async fn get(self: Box<Self>) -> Result<Self::Result, ResultError>;
 }
 
 //-------------------------------------------------------------------------------------------------------------------
 
+/// Oneshot result receiver uses a oneshot to receive the result.
 #[derive(Debug)]
 pub struct OneshotResultReceiver<S, R: Debug>
 {
     done_flag: Arc<AtomicBool>,
-    oneshot: futures::channel::oneshot::Receiver<Option<R>>,
+    oneshot: futures::channel::oneshot::Receiver<R>,
+    result_taken: bool,
     _phantom: std::marker::PhantomData<S>,
 }
 
@@ -37,7 +49,7 @@ pub struct OneshotResultReceiver<S, R: Debug>
 impl<S, R> ResultReceiver for OneshotResultReceiver<S, R>
 where
     S: Debug + Send + Sync + 'static,
-    R: Debug + Send + Sync + 'static
+    R: Debug + Send + Sync + 'static,
 {
     type Result = R;
 
@@ -46,9 +58,23 @@ where
         self.done_flag.load(Ordering::Acquire)
     }
 
-    async fn get(self: Box<Self>) -> Option<Self::Result>
+    fn try_get(&mut self) -> Option<Result<Self::Result, ResultError>>
     {
-        self.oneshot.await.unwrap_or(None)
+        match self.oneshot.try_recv()
+        {
+            Ok(Some(res)) => { self.result_taken = true; Some(Ok(res)) },
+            Err(_)        => { self.result_taken = true; Some(Err(ResultError::TaskFailure)) },
+            Ok(None)      => match self.result_taken { true => Some(Err(ResultError::Taken)), false => None },
+        }
+    }
+
+    async fn get(self: Box<Self>) -> Result<Self::Result, ResultError>
+    {
+        match self.oneshot.await
+        {
+            Ok(res) => Ok(res),
+            _       => Err(ResultError::TaskFailure),
+        }
     }
 }
 
@@ -66,40 +92,62 @@ where
         let (result_sender, result_receiver) = futures::channel::oneshot::channel();
         let work_task = async move {
                 let result = task.await;
-                let _ = result_sender.send(Some(result));
+                let _ = result_sender.send(result);
                 done_flag_clone.store(true, Ordering::Release);
             };
         spawner.spawn(work_task);
 
-        Self{ done_flag, oneshot: result_receiver, _phantom: std::marker::PhantomData::<S>::default() }
+        Self{ done_flag, oneshot: result_receiver, result_taken: false, _phantom: std::marker::PhantomData::default() }
     }
 }
 
 //-------------------------------------------------------------------------------------------------------------------
 
+/// Simple result receiver uses a future to receive the result.
 #[derive(Debug)]
 pub struct SimpleResultReceiver<S: SimpleSpawner<R>, R: Debug>
 {
-    future_result: <S as SimpleSpawner<R>>::Future,
+    future_result: MaybeDone<<S as SimpleSpawner<R>>::Future>,
+    result_taken: bool,
 }
 
 #[async_trait::async_trait]
 impl<S, R> ResultReceiver for SimpleResultReceiver<S, R>
 where
     S: SimpleSpawner<R>,
+    <S as spawners::SimpleSpawner<R>>::Future: Unpin,
     R: Debug + Send + Sync + 'static,
 {
     type Result = R;
 
     fn done(&self) -> bool
     {
-        S::is_terminated(&self.future_result)
+        self.future_result.is_terminated()
     }
 
-    async fn get(self: Box<Self>) -> Option<Self::Result>
+    fn try_get(&mut self) -> Option<Result<Self::Result, ResultError>>
     {
-        let Ok(result) = self.future_result.await else { return None; };
-        Some(result)
+        let pinned_fut = Pin::new(&mut self.future_result);
+        
+        match pinned_fut.take_output()
+        {
+            Some(Ok(res)) => { self.result_taken = true; Some(Ok(res)) }
+            Some(Err(_))  => { self.result_taken = true; Some(Err(ResultError::TaskFailure)) }
+            None          => match self.result_taken { true => Some(Err(ResultError::Taken)), false => None }
+        }
+    }
+
+    async fn get(mut self: Box<Self>) -> Result<Self::Result, ResultError>
+    {
+        let res =
+            match self.future_result
+            {
+                MaybeDone::Future(fut) => fut.await,
+                MaybeDone::Done(res) => res,
+                MaybeDone::Gone => return Err(ResultError::Taken),
+            };
+
+        res.map_err(|_| ResultError::TaskFailure)
     }
 }
 
@@ -112,18 +160,19 @@ where
     where
         F: std::future::Future<Output = R> + Send + 'static,
     {
-        let future_result = spawner.spawn(task);
+        let future_result = futures::future::maybe_done(spawner.spawn(task));
 
-        Self{ future_result }
+        Self{ future_result, result_taken: false }
     }
 }
 
 //-------------------------------------------------------------------------------------------------------------------
 
+/// Immediate result receiver.
 #[derive(Debug)]
 pub struct ImmedateResultReceiver<R: Debug>
 {
-    result: R,
+    result: Option<R>,
 }
 
 #[async_trait::async_trait]
@@ -136,9 +185,18 @@ impl<R: Debug + Send + Sync + 'static> ResultReceiver for ImmedateResultReceiver
         true
     }
 
-    async fn get(self: Box<Self>) -> Option<Self::Result>
+    fn try_get(&mut self) -> Option<Result<Self::Result, ResultError>>
     {
-        Some(self.result)
+        match self.result.take()
+        {
+            Some(res) => Some(Ok(res)),
+            None      => Some(Err(ResultError::Taken))
+        }
+    }
+
+    async fn get(mut self: Box<Self>) -> Result<Self::Result, ResultError>
+    {
+        self.try_get().unwrap_or(Err(ResultError::Taken))
     }
 }
 
@@ -146,7 +204,7 @@ impl<R: Debug> ImmedateResultReceiver<R>
 {
     pub fn new(result: R) -> Self
     {
-        Self{ result }
+        Self{ result: Some(result) }
     }
 }
 

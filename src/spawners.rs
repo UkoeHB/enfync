@@ -18,7 +18,7 @@ pub trait OneshotSpawner: Debug + Send + Sync + 'static
 
 pub trait SimpleSpawner<R>: Debug + Send + Sync + 'static
 {
-    type Error;
+    type Error: Debug + Send + 'static;
     type Future: std::future::Future<Output = Result<R, Self::Error>> + Debug + Send + 'static;
 
     fn spawn<F>(&self, task: F) -> Self::Future

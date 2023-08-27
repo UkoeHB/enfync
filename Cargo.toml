@@ -9,16 +9,24 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/UkoeHB/enfync"
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
 [dependencies]
-async-trait = { version = "0.1.71" }
-futures     = { version = "0.3.0" }
+async-trait = { version = "0.1" }
+futures     = { version = "0.3" }
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
-tokio = { version = "1.29.1", features = [ "rt-multi-thread" ] }
+tokio = { version = "1.29", features = [ "rt-multi-thread" ] }
 
 [target.'cfg(target_family = "wasm")'.dependencies]
-wasm-bindgen         = { version = "0.2.81" }
-wasm-bindgen-futures = { version = "0.4.37" }
+wasm-bindgen         = { version = "0.2" }
+wasm-bindgen-futures = { version = "0.4" }
+
+[target.'cfg(target_family = "wasm")'.dev-dependencies]
+gloo-timers       = { version = "0.2", features = [ "futures" ] }
+wasm-bindgen-test = { version = "0.3" }
+web-sys           = { version = "0.3", features = [ "console" ] }
 
 [profile.release]
 lto           = true

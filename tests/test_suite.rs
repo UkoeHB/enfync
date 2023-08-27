@@ -1,103 +1,117 @@
 //local shortcuts
 
 //third-party shortcuts
+#[cfg(not(target_family = "wasm"))]
+use enfync::Handle;
 
 //standard shortcuts
 
 
 //-------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------
 
-fn basic_extract<H: enfync::Handle>()
+fn print_dbg(s: &str)
 {
-    // make task
-    dbg!("test: basic_extract");
-    let val = 10;
-    let task = async move { dbg!("task ran"); val };
+    #[cfg(not(target_family = "wasm"))]
+    dbg!(s);
 
-    // spawn task
-    let mut pending_result = H::default().spawn(task);
-
-    // wait for task
-    let Ok(res) = pending_result.extract() else { panic!(""); };
-    assert_eq!(res, val);
+    #[cfg(target_family = "wasm")]
+    web_sys::console::log_1(&s.into());
 }
 
 //-------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------
 
-fn basic_try_extract<H: enfync::Handle>()
+async fn sleep(sleep_ms: u32)
+{
+    #[cfg(not(target_family = "wasm"))]
+    std::thread::sleep(std::time::Duration::from_millis(sleep_ms as u64));
+
+    #[cfg(target_family = "wasm")]
+    gloo_timers::future::TimeoutFuture::new(sleep_ms).await;
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------
+
+async fn basic_try_extract<H: enfync::Handle>()
 {
     // make task
-    dbg!("test: basic_try_extract");
+    print_dbg("test: basic_try_extract");
     let val = 10;
-    let task = async move { dbg!("task ran"); val };
+    let task = async move { print_dbg("task ran"); val };
 
     // spawn task
+    print_dbg("test: basic_try_extract... spawning");
     let mut pending_result = H::default().spawn(task);
 
     // wait for async machinery
-    std::thread::sleep(std::time::Duration::from_millis(15));
+    print_dbg("test: basic_try_extract... sleeping");
+    sleep(15).await;
 
     // wait for task
+    print_dbg("test: basic_try_extract... extracting");
     let Some(Ok(res)) = pending_result.try_extract() else { panic!(""); };
     assert_eq!(res, val);
 }
 
 //-------------------------------------------------------------------------------------------------------------------
 
-fn basic_nesting<H: enfync::Handle>()
+async fn basic_nesting<H: enfync::Handle>()
 {
     // make task
-    dbg!("test: basic_extract");
+    print_dbg("test: basic_nesting");
     let val = 10;
-    let task = async move { dbg!("task ran"); val };
+    let task = async move { print_dbg("task ran"); val };
 
     // spawn task
+    print_dbg("test: basic_nesting... spawning");
     let mut pending_result = H::default().spawn(task);
 
     // make new task waiting for other task
-    let mut pending_result = H::default().spawn(async move { pending_result.extract_async().await });
+    print_dbg("test: basic_nesting... new task");
+    let mut pending_result = H::default().spawn(async move { pending_result.extract().await });
 
-    let Ok(Ok(res)) = pending_result.extract() else { panic!(""); };
+    print_dbg("test: basic_nesting... waiting");
+    let Ok(Ok(res)) = pending_result.extract().await else { panic!(""); };
     assert_eq!(res, val);
 }
 
 //-------------------------------------------------------------------------------------------------------------------
 
-fn test_suite_impl<H: enfync::Handle>()
+async fn test_suite_impl<H: enfync::Handle>()
 {
-    basic_extract::<H>();
-    basic_try_extract::<H>();
-    basic_nesting::<H>();
+    basic_try_extract::<H>().await;
+    basic_nesting::<H>().await;
 }
 
 //-------------------------------------------------------------------------------------------------------------------
 
-fn test_suite()
+async fn test_suite()
 {
-    dbg!("test suite IO");
-    test_suite_impl::<enfync::builtin::IOHandle>();
-    dbg!("test suite CPU");
-    test_suite_impl::<enfync::builtin::CPUHandle>();
-
-    dbg!("test suite MIXED");
-    //todo
+    print_dbg("test suite IO");
+    test_suite_impl::<enfync::builtin::IOHandle>().await;
+    print_dbg("test suite CPU");
+    test_suite_impl::<enfync::builtin::CPUHandle>().await;
 }
 
 //-------------------------------------------------------------------------------------------------------------------
 
+#[cfg(not(target_family = "wasm"))]
 #[test]
 fn test_core_native()
 {
-    test_suite();
+    enfync::builtin::IOHandle::default().spawn( async { test_suite().await; });
 }
 
 //-------------------------------------------------------------------------------------------------------------------
 
-#[cfg(wasm)]
-#[wasm_bindgen_test]
-fn test_core_wasm()
+#[cfg(target_family = "wasm")]
+#[wasm_bindgen_test::wasm_bindgen_test]
+async fn test_core_wasm()
 {
-    test_suite();
+    web_sys::console::log_1(&"wasm test running".into());
+    test_suite().await;
 }
 
 //-------------------------------------------------------------------------------------------------------------------

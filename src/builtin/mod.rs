@@ -1,21 +1,21 @@
 //module tree
-#[cfg(not(wasm))]
+#[cfg(not(target_family = "wasm"))]
 mod handle_impls_native;
-#[cfg(not(wasm))]
+#[cfg(not(target_family = "wasm"))]
 mod spawner_impls_native;
 
-#[cfg(wasm)]
+#[cfg(target_family = "wasm")]
 mod handle_impls_wasm;
-#[cfg(wasm)]
+#[cfg(target_family = "wasm")]
 mod spawner_impls_wasm;
 
 //API exports
-#[cfg(not(wasm))]
+#[cfg(not(target_family = "wasm"))]
 pub use crate::builtin::handle_impls_native::*;
-#[cfg(not(wasm))]
+#[cfg(not(target_family = "wasm"))]
 pub use crate::builtin::spawner_impls_native::*;
 
-#[cfg(wasm)]
+#[cfg(target_family = "wasm")]
 pub use crate::builtin::handle_impls_wasm::*;
-#[cfg(wasm)]
+#[cfg(target_family = "wasm")]
 pub use crate::builtin::spawner_impls_wasm::*;

@@ -1,9 +1,10 @@
 //local shortcuts
-use crate::*;
+use crate::{*, builtin::*};
 
 //third-party shortcuts
 
 //standard shortcuts
+use std::fmt::Debug;
 use std::future::Future;
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -16,9 +17,10 @@ impl Handle for IOHandle
 {
     fn spawn<R, F>(&self, task: F) -> PendingResult<R>
     where
+        R: Debug + Send + Sync + 'static,
         F: Future<Output = R> + Send + 'static
     {
-        let result_receiver = OneshotSpawner::new(&WasmIOSpawner{}, task);
+        let result_receiver = OneshotResultReceiver::new(&WasmIOSpawner{}, task);
         PendingResult::new(result_receiver)
     }
 }
@@ -32,20 +34,6 @@ impl TryAdopt for IOHandle { fn try_adopt() -> Option<IOHandle> { Some(IOHandle)
 ///       with web workers, which are very inefficient and impose many restrictions on the interface (such as
 ///       requiring everything to implement `Serialize/Deserialize`, and needing explicitly-defined channels since
 ///       there is no shared memory).
-#[derive(Clone, Debug, Default)]
-pub struct CPUHandle;
-
-impl Handle for CPUHandle
-{
-    fn spawn<R, F>(&self, task: F) -> PendingResult<R>
-    where
-        F: Future<Output = R> + Send + 'static
-    {
-        let result_receiver = OneshotSpawner::new(&WasmIOSpawner{}, task);
-        PendingResult::new(result_receiver)
-    }
-}
-
-impl TryAdopt for CPUHandle { fn try_adopt() -> Option<CPUHandle> { Some(CPUHandle) } }
+pub type CPUHandle = IOHandle;
 
 //-------------------------------------------------------------------------------------------------------------------
