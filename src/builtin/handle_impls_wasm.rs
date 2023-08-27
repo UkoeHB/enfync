@@ -9,11 +9,11 @@ use std::future::Future;
 
 //-------------------------------------------------------------------------------------------------------------------
 
-/// Built-in IO runtime handle (wasm task)
+/// Built-in IO runtime handle (spawns wasm tasks).
 #[derive(Clone, Debug, Default)]
-pub struct IOHandle;
+pub struct Handle;
 
-impl Handle for IOHandle
+impl HandleTrait for Handle
 {
     fn spawn<R, F>(&self, task: F) -> PendingResult<R>
     where
@@ -25,15 +25,6 @@ impl Handle for IOHandle
     }
 }
 
-impl TryAdopt for IOHandle { fn try_adopt() -> Option<IOHandle> { Some(IOHandle) } }
-
-//-------------------------------------------------------------------------------------------------------------------
-
-/// Built-in CPU runtime handle (wasm task)
-/// note: We use the WASM IO spawner here because implementing a CPU spawner on WASM currently can only be done
-///       with web workers, which are very inefficient and impose many restrictions on the interface (such as
-///       requiring everything to implement `Serialize/Deserialize`, and needing explicitly-defined channels since
-///       there is no shared memory).
-pub type CPUHandle = IOHandle;
+impl TryAdopt for Handle { fn try_adopt() -> Option<Handle> { Some(Handle) } }
 
 //-------------------------------------------------------------------------------------------------------------------

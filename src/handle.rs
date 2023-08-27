@@ -8,7 +8,7 @@ use std::fmt::Debug;
 
 //-------------------------------------------------------------------------------------------------------------------
 
-pub trait Handle: Default + TryAdopt
+pub trait HandleTrait: Default + TryAdopt
 {
     fn spawn<R, F>(&self, task: F) -> PendingResult<R>
     where

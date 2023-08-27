@@ -31,27 +31,33 @@ This crate is designed for projects that want to ergonomically support WASM targ
 
 ## Recommended WASM Build
 
-We provide a custom `release-wasm` profile that enables `panic = "abort"` and optimizes for small binaries. There is a corresponding `dev-wasm` profile that enables `panic = "abort"`.
+We provide a custom `release-wasm` profile that enables `panic = "abort"` and optimizes for small binaries. There is a corresponding `dev-wasm` profile that enables `panic = "abort"`. Currently `wasm-pack` [doesn't support](https://github.com/rustwasm/wasm-pack/issues/1111) custom profiles, so we have to settle for a more verbose build script that overwrites the build files.
 
 1. Prep tooling
 - `rustup target install wasm32-unknown-unknown`
 - `cargo install wasm-pack`
 - install [`wasm-opt`](https://github.com/webassembly/binaryen)
 
-2. Build
+2. Build (this builds twice because we want the `wasm-pack` convenience output and the `release-wasm` profile; you can drop the `wasm-pack` piece as needed)
 ```ignore
-cargo build --release-wasm --target wasm32-unknown-unknown &&
-wasm-pack build --target no-modules ./target/ --mode no-install
+wasm-pack build --target no-modules --mode no-install &&
+cargo build --profile=release-wasm --target wasm32-unknown-unknown &&
+wasm-bindgen --out-dir ./pkg --target no-modules ./target/wasm32-unknown-unknown/release-wasm/enfync.wasm
 ```
 
 3. Optimize WASM binary
-- `wasm-opt Os wasm_gen_bg.wasm -o -`
+- `wasm-opt -Os pkg/enfync_bg.wasm -o pkg/enfync_bg.wasm`
+- see [the reference](https://rustwasm.github.io/book/reference/code-size.html) for further optimizations
+
+4. Compress WASM binary
+- TODO: gzip
 
 
 
-## Running WASM tests
+## Running WASM
 
-Command: `wasm-pack test --node`
+**Tests**: `wasm-pack test --node`
+**Run your program**: [wasm-server-runner](https://github.com/jakobhellermann/wasm-server-runner) tool
 
 
 

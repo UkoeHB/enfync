@@ -2,7 +2,7 @@
 
 //third-party shortcuts
 #[cfg(not(target_family = "wasm"))]
-use enfync::Handle;
+use enfync::HandleTrait;
 
 //standard shortcuts
 
@@ -25,16 +25,30 @@ fn print_dbg(s: &str)
 async fn sleep(sleep_ms: u32)
 {
     #[cfg(not(target_family = "wasm"))]
-    std::thread::sleep(std::time::Duration::from_millis(sleep_ms as u64));
+    {
+        // try tokio sleep
+        if let Ok(_) = tokio::runtime::Handle::try_current()
+        {
+            tokio::time::sleep(std::time::Duration::from_millis(sleep_ms as u64)).await;
+            return;
+        }
+
+        // fallback
+        std::thread::sleep(std::time::Duration::from_millis(sleep_ms as u64));
+        return;
+    }
 
     #[cfg(target_family = "wasm")]
-    gloo_timers::future::TimeoutFuture::new(sleep_ms).await;
+    {
+        gloo_timers::future::TimeoutFuture::new(sleep_ms).await;
+        return;
+    }
 }
 
 //-------------------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------------------
 
-async fn basic_try_extract<H: enfync::Handle>()
+async fn basic_try_extract<H: enfync::HandleTrait>()
 {
     // make task
     print_dbg("test: basic_try_extract");
@@ -57,7 +71,7 @@ async fn basic_try_extract<H: enfync::Handle>()
 
 //-------------------------------------------------------------------------------------------------------------------
 
-async fn basic_nesting<H: enfync::Handle>()
+async fn basic_nesting<H: enfync::HandleTrait>()
 {
     // make task
     print_dbg("test: basic_nesting");
@@ -79,7 +93,7 @@ async fn basic_nesting<H: enfync::Handle>()
 
 //-------------------------------------------------------------------------------------------------------------------
 
-async fn test_suite_impl<H: enfync::Handle>()
+async fn test_suite_impl<H: enfync::HandleTrait>()
 {
     basic_try_extract::<H>().await;
     basic_nesting::<H>().await;
@@ -89,10 +103,8 @@ async fn test_suite_impl<H: enfync::Handle>()
 
 async fn test_suite()
 {
-    print_dbg("test suite IO");
-    test_suite_impl::<enfync::builtin::IOHandle>().await;
-    print_dbg("test suite CPU");
-    test_suite_impl::<enfync::builtin::CPUHandle>().await;
+    print_dbg("test suite");
+    test_suite_impl::<enfync::builtin::Handle>().await;
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -101,7 +113,7 @@ async fn test_suite()
 #[test]
 fn test_core_native()
 {
-    enfync::builtin::IOHandle::default().spawn( async { test_suite().await; });
+    enfync::builtin::Handle::default().spawn( async { test_suite().await; });
 }
 
 //-------------------------------------------------------------------------------------------------------------------

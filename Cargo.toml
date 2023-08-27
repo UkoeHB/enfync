@@ -17,7 +17,7 @@ async-trait = { version = "0.1" }
 futures     = { version = "0.3" }
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
-tokio = { version = "1.29", features = [ "rt-multi-thread" ] }
+tokio = { version = "1.29", features = [ "rt-multi-thread", "time" ] }
 
 [target.'cfg(target_family = "wasm")'.dependencies]
 wasm-bindgen         = { version = "0.2" }
