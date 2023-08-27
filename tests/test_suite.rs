@@ -22,32 +22,6 @@ fn print_dbg(s: &str)
 //-------------------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------------------
 
-async fn sleep(sleep_ms: u32)
-{
-    #[cfg(not(target_family = "wasm"))]
-    {
-        // try tokio sleep
-        if let Ok(_) = tokio::runtime::Handle::try_current()
-        {
-            tokio::time::sleep(std::time::Duration::from_millis(sleep_ms as u64)).await;
-            return;
-        }
-
-        // fallback
-        std::thread::sleep(std::time::Duration::from_millis(sleep_ms as u64));
-        return;
-    }
-
-    #[cfg(target_family = "wasm")]
-    {
-        gloo_timers::future::TimeoutFuture::new(sleep_ms).await;
-        return;
-    }
-}
-
-//-------------------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------------------
-
 async fn basic_try_extract<H: enfync::HandleTrait>()
 {
     // make task
@@ -61,7 +35,7 @@ async fn basic_try_extract<H: enfync::HandleTrait>()
 
     // wait for async machinery
     print_dbg("test: basic_try_extract... sleeping");
-    sleep(15).await;
+    enfync::sleep(std::time::Duration::from_millis(15)).await;
 
     // wait for task
     print_dbg("test: basic_try_extract... extracting");
