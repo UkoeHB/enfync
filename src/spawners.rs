@@ -24,8 +24,6 @@ pub trait SimpleSpawner<R>: Debug + Send + Sync + 'static
     fn spawn<F>(&self, task: F) -> Self::Future
     where
         F: std::future::Future<Output = R> + Send + 'static;
-
-    fn is_terminated(f: &Self::Future) -> bool;
 }
 
 impl<Ss: SimpleSpawner::<()>> OneshotSpawner for Ss
@@ -34,7 +32,7 @@ impl<Ss: SimpleSpawner::<()>> OneshotSpawner for Ss
     where
         F: std::future::Future<Output = ()> + Send + 'static,
     {
-        self.spawn(task);  //discard future (assume oneshots use a oneshot channel)
+        self.spawn(task);  //detach future (assume oneshots use a oneshot channel)
     }
 }
 

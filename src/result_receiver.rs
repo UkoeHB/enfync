@@ -37,18 +37,16 @@ pub trait ResultReceiver: Debug
 
 /// Oneshot result receiver uses a oneshot to receive the result.
 #[derive(Debug)]
-pub struct OneshotResultReceiver<S, R: Debug>
+pub struct OneshotResultReceiver<R: Debug>
 {
     done_flag: Arc<AtomicBool>,
     oneshot: futures::channel::oneshot::Receiver<R>,
     result_taken: bool,
-    _phantom: std::marker::PhantomData<S>,
 }
 
 #[async_trait::async_trait]
-impl<S, R> ResultReceiver for OneshotResultReceiver<S, R>
+impl<R> ResultReceiver for OneshotResultReceiver<R>
 where
-    S: Debug + Send + Sync + 'static,
     R: Debug + Send + Sync + 'static,
 {
     type Result = R;
@@ -78,13 +76,13 @@ where
     }
 }
 
-impl<S, R> OneshotResultReceiver<S, R>
+impl<R> OneshotResultReceiver<R>
 where
-    S: Debug + OneshotSpawner,
     R: Debug + Send + Sync + 'static
 {
-    pub fn new<F>(spawner: &S, task: F) -> Self
+    pub fn new<S, F>(spawner: &S, task: F) -> Self
     where
+        S: OneshotSpawner,
         F: std::future::Future<Output = R> + Send + 'static,
     {
         let done_flag = Arc::new(AtomicBool::new(false));
@@ -97,7 +95,7 @@ where
             };
         spawner.spawn(work_task);
 
-        Self{ done_flag, oneshot: result_receiver, result_taken: false, _phantom: std::marker::PhantomData::default() }
+        Self{ done_flag, oneshot: result_receiver, result_taken: false }
     }
 }
 
@@ -143,8 +141,8 @@ where
             match self.future_result
             {
                 MaybeDone::Future(fut) => fut.await,
-                MaybeDone::Done(res) => res,
-                MaybeDone::Gone => return Err(ResultError::Taken),
+                MaybeDone::Done(res)   => res,
+                MaybeDone::Gone        => return Err(ResultError::Taken),
             };
 
         res.map_err(|_| ResultError::TaskFailure)
