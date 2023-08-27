@@ -87,7 +87,16 @@ async fn test_suite()
 #[test]
 fn test_core_native()
 {
-    enfync::builtin::Handle::default().spawn( async { test_suite().await; });
+    let handle = enfync::builtin::Handle::default();
+    // test suit
+    handle.spawn( async { test_suite().await; });
+
+    // test blocking extract
+    let val = 10;
+    let task = async move { val };
+    let pending_result = handle.spawn(task);
+    let Ok(res) = enfync::blocking::extract(pending_result) else { panic!(""); };
+    assert_eq!(res, val);
 }
 
 //-------------------------------------------------------------------------------------------------------------------

@@ -88,3 +88,17 @@ impl<R: Debug + Send + Sync + 'static> PendingResult<R>
 }
 
 //-------------------------------------------------------------------------------------------------------------------
+
+#[cfg(not(target_family = "wasm"))]
+pub mod blocking
+{
+    /// Extract a pending result while blocking.
+    pub fn extract<R>(mut pending_result: super::PendingResult<R>) -> Result<R, super::ResultError>
+    where
+        R: Send + Sync + std::fmt::Debug + 'static
+    {
+        futures::executor::block_on(async move { pending_result.extract().await })
+    }
+}
+
+//-------------------------------------------------------------------------------------------------------------------
