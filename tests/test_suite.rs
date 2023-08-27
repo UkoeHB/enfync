@@ -37,6 +37,9 @@ async fn basic_try_extract<H: enfync::HandleTrait>()
     print_dbg("test: basic_try_extract... sleeping");
     enfync::sleep(std::time::Duration::from_millis(15)).await;
 
+    // task should be done
+    assert!(pending_result.done());
+
     // wait for task
     print_dbg("test: basic_try_extract... extracting");
     let Some(Ok(res)) = pending_result.try_extract() else { panic!(""); };
@@ -95,6 +98,8 @@ fn test_core_native()
     let val = 10;
     let task = async move { val };
     let pending_result = handle.spawn(task);
+    std::thread::sleep(std::time::Duration::from_millis(5));
+    assert!(pending_result.done());
     let Ok(res) = enfync::blocking::extract(pending_result) else { panic!(""); };
     assert_eq!(res, val);
 }

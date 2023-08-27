@@ -4,7 +4,7 @@ use crate::*;
 //third-party shortcuts
 
 //standard shortcuts
-use futures::future::{FusedFuture, MaybeDone};
+use futures::future::MaybeDone;
 use std::fmt::Debug;
 use std::pin::Pin;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -18,7 +18,6 @@ pub trait ResultReceiver: Debug
     type Result: Send + Sync + 'static;
 
     /// Check if the result is ready.
-    /// This is **not** guaranteed to synchronize with a successful call to `try_get()` or `get()`.
     fn done(&self) -> bool;
 
     /// Try to get a result.
@@ -91,6 +90,10 @@ where
         let work_task = async move {
                 let result = task.await;
                 let _ = result_sender.send(result);
+
+                // ORDERING
+                // WASM compiles `AtomicBool` as `bool`, however since WASM is fully single-threaded, the ordering
+                // guarantee here is preserved.
                 done_flag_clone.store(true, Ordering::Release);
             };
         spawner.spawn(work_task);
@@ -120,7 +123,12 @@ where
 
     fn done(&self) -> bool
     {
-        self.future_result.is_terminated()
+        match &self.future_result
+        {
+            MaybeDone::Future(fut) => S::is_terminated(fut),
+            MaybeDone::Done(_)     => true,
+            MaybeDone::Gone        => true,
+        }
     }
 
     fn try_get(&mut self) -> Option<Result<Self::Result, ResultError>>

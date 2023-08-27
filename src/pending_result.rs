@@ -36,7 +36,7 @@ impl<R: Debug + Send + Sync + 'static> PendingResult<R>
     }
 
     /// Make a pending result that is immediately ready.
-    pub fn ready(result: R) -> Self
+    pub fn make_ready(result: R) -> Self
     {
         Self{ result_receiver: Some(Box::new(ImmedateResultReceiver::new(result))) }
     }
@@ -55,7 +55,7 @@ impl<R: Debug + Send + Sync + 'static> PendingResult<R>
 
     /// Check if work is done (result may be unavailable if already extracted).
     /// - This is robust for checking if a result-less task has completed (i.e. `PendingResult<()>`).
-    pub fn is_done(&self) -> bool
+    pub fn done(&self) -> bool
     {
         if self.has_result() || self.result_receiver.is_none() { return true; }
         false
