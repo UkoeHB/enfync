@@ -60,7 +60,7 @@ impl From<tokio::runtime::Handle> for TokioHandle
 //-------------------------------------------------------------------------------------------------------------------
 
 /// Built-in CPU runtime handle (std threads)
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct CPUHandle;
 
 impl HandleTrait for CPUHandle

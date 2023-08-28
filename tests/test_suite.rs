@@ -119,7 +119,6 @@ fn test_core_native()
 #[wasm_bindgen_test::wasm_bindgen_test]
 async fn test_core_wasm()
 {
-    web_sys::console::log_1(&"wasm test running".into());
     test_suite().await;
 }
 
