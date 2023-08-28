@@ -39,7 +39,7 @@ pub trait ResultReceiver: Debug
 pub struct OneshotResultReceiver<R: Debug>
 {
     done_flag: Arc<AtomicBool>,
-    oneshot: futures::channel::oneshot::Receiver<R>,
+    result_receiver: futures::channel::oneshot::Receiver<R>,
     result_taken: bool,
 }
 
@@ -57,7 +57,7 @@ where
 
     fn try_get(&mut self) -> Option<Result<Self::Result, ResultError>>
     {
-        match self.oneshot.try_recv()
+        match self.result_receiver.try_recv()
         {
             Ok(Some(res)) => { self.result_taken = true; Some(Ok(res)) },
             Err(_)        => { self.result_taken = true; Some(Err(ResultError::TaskFailure)) },
@@ -67,7 +67,7 @@ where
 
     async fn get(self: Box<Self>) -> Result<Self::Result, ResultError>
     {
-        match self.oneshot.await
+        match self.result_receiver.await
         {
             Ok(res) => Ok(res),
             _       => Err(ResultError::TaskFailure),
@@ -98,7 +98,7 @@ where
             };
         spawner.spawn(work_task);
 
-        Self{ done_flag, oneshot: result_receiver, result_taken: false }
+        Self{ done_flag, result_receiver, result_taken: false }
     }
 }
 

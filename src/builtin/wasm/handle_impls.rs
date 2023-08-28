@@ -1,5 +1,5 @@
 //local shortcuts
-use crate::{*, builtin::*};
+use crate::*;
 
 //third-party shortcuts
 
@@ -11,20 +11,20 @@ use std::future::Future;
 
 /// Built-in IO runtime handle (spawns wasm tasks).
 #[derive(Clone, Debug, Default)]
-pub struct Handle;
+pub struct WASMHandle;
 
-impl HandleTrait for Handle
+impl HandleTrait for WASMHandle
 {
     fn spawn<R, F>(&self, task: F) -> PendingResult<R>
     where
         R: Debug + Send + Sync + 'static,
         F: Future<Output = R> + Send + 'static
     {
-        let result_receiver = OneshotResultReceiver::new(&WasmIOSpawner{}, task);
+        let result_receiver = OneshotResultReceiver::new(&builtin::wasm::WasmIOSpawner{}, task);
         PendingResult::new(result_receiver)
     }
 }
 
-impl TryAdopt for Handle { fn try_adopt() -> Option<Handle> { Some(Handle) } }
+impl TryAdopt for WASMHandle { fn try_adopt() -> Option<WASMHandle> { Some(WASMHandle) } }
 
 //-------------------------------------------------------------------------------------------------------------------

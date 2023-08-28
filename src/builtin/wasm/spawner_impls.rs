@@ -26,4 +26,6 @@ impl OneshotSpawner for WasmIOSpawner
     }
 }
 
+impl From<builtin::wasm::WASMHandle> for WasmIOSpawner { fn from(_: builtin::wasm::WASMHandle) -> Self { WasmIOSpawner{} } }
+
 //-------------------------------------------------------------------------------------------------------------------

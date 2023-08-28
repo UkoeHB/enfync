@@ -62,6 +62,6 @@ impl OneshotSpawner for StdSpawner
     }
 }
 
-impl From<builtin::CPUHandle> for StdSpawner { fn from(_: builtin::CPUHandle) -> Self { StdSpawner{} } }
+impl From<builtin::native::CPUHandle> for StdSpawner { fn from(_: builtin::native::CPUHandle) -> Self { StdSpawner{} } }
 
 //-------------------------------------------------------------------------------------------------------------------

@@ -108,7 +108,7 @@ fn test_core_native()
     let val = 11;
     let task = async move { val };
     let mut pending_result = io_handle.spawn(task);
-    let pending_result = enfync::builtin::CPUHandle::default().spawn(async move { pending_result.extract().await });
+    let pending_result = enfync::builtin::native::CPUHandle::default().spawn(async move { pending_result.extract().await });
     let Ok(Ok(res)) = enfync::blocking::extract(pending_result) else { panic!(""); };
     assert_eq!(res, val);
 }
