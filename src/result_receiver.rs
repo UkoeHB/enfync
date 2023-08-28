@@ -125,7 +125,7 @@ where
     {
         match &self.future_result
         {
-            MaybeDone::Future(fut) => S::is_terminated(fut),
+            MaybeDone::Future(fut) => S::is_done(fut),
             MaybeDone::Done(_)     => true,
             MaybeDone::Gone        => true,
         }
@@ -134,7 +134,7 @@ where
     fn try_get(&mut self) -> Option<Result<Self::Result, ResultError>>
     {
         let pinned_fut = Pin::new(&mut self.future_result);
-        
+
         match pinned_fut.take_output()
         {
             Some(Ok(res)) => { self.result_taken = true; Some(Ok(res)) }

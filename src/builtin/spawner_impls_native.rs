@@ -28,7 +28,7 @@ impl<R: Debug + Send + Sync + 'static> SimpleSpawner<R> for TokioSpawner<R>
         self.handle.spawn(task)
     }
 
-    fn is_terminated(f: &Self::Future) -> bool
+    fn is_done(f: &Self::Future) -> bool
     {
         f.is_finished()
     }
