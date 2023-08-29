@@ -43,6 +43,33 @@ pub struct OneshotResultReceiver<R: Debug>
     result_taken: bool,
 }
 
+impl<R> OneshotResultReceiver<R>
+where
+    R: Debug + Send + Sync + 'static
+{
+    pub fn new<S, F>(spawner: &S, task: F) -> Self
+    where
+        S: OneshotSpawner,
+        F: std::future::Future<Output = R> + Send + 'static,
+    {
+        let done_flag = Arc::new(AtomicBool::new(false));
+        let done_flag_clone = done_flag.clone();
+        let (result_sender, result_receiver) = futures::channel::oneshot::channel();
+        let work_task = async move {
+                let result = task.await;
+                let _ = result_sender.send(result);
+
+                // ORDERING
+                // WASM compiles `AtomicBool` as `bool`, however since WASM is fully single-threaded, the ordering
+                // guarantee here is preserved.
+                done_flag_clone.store(true, Ordering::Release);
+            };
+        spawner.spawn(work_task);
+
+        Self{ done_flag, result_receiver, result_taken: false }
+    }
+}
+
 #[async_trait::async_trait]
 impl<R> ResultReceiver for OneshotResultReceiver<R>
 where
@@ -75,33 +102,6 @@ where
     }
 }
 
-impl<R> OneshotResultReceiver<R>
-where
-    R: Debug + Send + Sync + 'static
-{
-    pub fn new<S, F>(spawner: &S, task: F) -> Self
-    where
-        S: OneshotSpawner,
-        F: std::future::Future<Output = R> + Send + 'static,
-    {
-        let done_flag = Arc::new(AtomicBool::new(false));
-        let done_flag_clone = done_flag.clone();
-        let (result_sender, result_receiver) = futures::channel::oneshot::channel();
-        let work_task = async move {
-                let result = task.await;
-                let _ = result_sender.send(result);
-
-                // ORDERING
-                // WASM compiles `AtomicBool` as `bool`, however since WASM is fully single-threaded, the ordering
-                // guarantee here is preserved.
-                done_flag_clone.store(true, Ordering::Release);
-            };
-        spawner.spawn(work_task);
-
-        Self{ done_flag, result_receiver, result_taken: false }
-    }
-}
-
 //-------------------------------------------------------------------------------------------------------------------
 
 /// Simple result receiver uses a future to receive the result.
@@ -110,6 +110,21 @@ pub struct SimpleResultReceiver<S: SimpleSpawner<R>, R: Debug>
 {
     future_result: MaybeDone<<S as SimpleSpawner<R>>::Future>,
     result_taken: bool,
+}
+
+impl<S, R> SimpleResultReceiver<S, R>
+where
+    S: SimpleSpawner<R>,
+    R: Debug + Send + Sync + 'static,
+{
+    pub fn new<F>(spawner: &S, task: F) -> Self
+    where
+        F: std::future::Future<Output = R> + Send + 'static,
+    {
+        let future_result = futures::future::maybe_done(spawner.spawn(task));
+
+        Self{ future_result, result_taken: false }
+    }
 }
 
 #[async_trait::async_trait]
@@ -157,21 +172,6 @@ where
     }
 }
 
-impl<S, R> SimpleResultReceiver<S, R>
-where
-    S: SimpleSpawner<R>,
-    R: Debug + Send + Sync + 'static,
-{
-    pub fn new<F>(spawner: &S, task: F) -> Self
-    where
-        F: std::future::Future<Output = R> + Send + 'static,
-    {
-        let future_result = futures::future::maybe_done(spawner.spawn(task));
-
-        Self{ future_result, result_taken: false }
-    }
-}
-
 //-------------------------------------------------------------------------------------------------------------------
 
 /// Immediate result receiver.
@@ -179,6 +179,14 @@ where
 pub struct ImmedateResultReceiver<R: Debug>
 {
     result: Option<R>,
+}
+
+impl<R: Debug> ImmedateResultReceiver<R>
+{
+    pub fn new(result: R) -> Self
+    {
+        Self{ result: Some(result) }
+    }
 }
 
 #[async_trait::async_trait]
@@ -203,14 +211,6 @@ impl<R: Debug + Send + Sync + 'static> ResultReceiver for ImmedateResultReceiver
     async fn get(mut self: Box<Self>) -> Result<Self::Result, ResultError>
     {
         self.try_get().unwrap_or(Err(ResultError::Taken))
-    }
-}
-
-impl<R: Debug> ImmedateResultReceiver<R>
-{
-    pub fn new(result: R) -> Self
-    {
-        Self{ result: Some(result) }
     }
 }
 

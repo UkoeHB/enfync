@@ -48,6 +48,25 @@ async fn basic_try_extract<H: enfync::HandleTrait>()
 
 //-------------------------------------------------------------------------------------------------------------------
 
+async fn basic_extract<H: enfync::HandleTrait>()
+{
+    // make task
+    print_dbg("test: basic_extract");
+    let val = 10;
+    let task = async move { print_dbg("task ran"); val };
+
+    // spawn task
+    print_dbg("test: basic_extract... spawning");
+    let mut pending_result = H::default().spawn(task);
+
+    // wait for the result
+    print_dbg("test: basic_extract... waiting");
+    let Ok(res) = pending_result.extract().await else { panic!(""); };
+    assert_eq!(res, val);
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+
 async fn basic_nesting<H: enfync::HandleTrait>()
 {
     // make task
@@ -73,6 +92,7 @@ async fn basic_nesting<H: enfync::HandleTrait>()
 async fn test_suite_impl<H: enfync::HandleTrait>()
 {
     basic_try_extract::<H>().await;
+    basic_extract::<H>().await;
     basic_nesting::<H>().await;
 }
 
