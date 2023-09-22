@@ -2,12 +2,21 @@
 name = "enfync"
 description = "Environment-friendly async utilities"
 authors = ["koe <ukoe@protonmail.com>"]
-version = "0.1.7"
+version = "0.0.7"
 edition = "2021"
 keywords = ["async", "wasm", "native"]
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/UkoeHB/enfync"
+
+[lib]
+path = "src/lib.rs"
+test = false
+
+[[test]]
+name    = "test"
+path    = "tests/test/mod.rs"
+doctest = false
 
 [target.'cfg(target_family = "wasm")'.lib]
 crate-type = ["cdylib", "rlib"]
