@@ -1,15 +1,21 @@
 # Environment-friendly async (`enfync`)  {INITIAL RELEASE IS WIP}
 
 Ergonomic utilities for async IO work that easily cross-compiles for native and browser.
-- Use `enfync::Handle::spawn() -> enfync::PendingResult<R>` to launch an IO task on your desired runtime (see documentation for details). The `enfync::PendingResult<R>` output can be used as a join handle on the task. Any errors encountered during your async work will be discarded and replaced with `Err(enfync::ResultError::TaskFailure)`.
+- Use `enfync::builtin::Handle::spawn() -> enfync::PendingResult<R>` to launch an IO task on your desired runtime (see documentation for details). The `enfync::PendingResult<R>` output can be used as a join handle on the task. Any errors encountered during your async work will be discarded and replaced with `Err(enfync::ResultError::TaskFailure)`.
 
 This crate is designed for projects that want to ergonomically support WASM targets without sacrificing performance on native builds.
+
+
+## Features
+
+- `default`: `builtin`
+- `builtin`: Enables the [`enfync::builtin`] module. The handle [`enfync::builtin::Handle`] is an alias for platform-specific implementations of the [`enfync::Handle`] trait (`tokio` on non-WASM, `wasm-bindgen-futures` on WASM).
 
 
 
 ## Important notes
 
-- In WASM, only **one task** can run at a time. The first task is always `fn main()`, followed by whatever tasks were spawned during `fn main()`. Any long-running task, including `fn main()`, will block all other tasks. This means you fundamentally cannot use this crate unless you develop your project from the ground up with WASM in mind.
+- In WASM, only **one task** can run at a time. The first task is always `fn main()`, followed by whatever tasks were spawned during `fn main()`. Any long-running task, including `fn main()`, will block all other tasks. This means you fundamentally cannot benefit from this crate unless you develop your project from the ground up with WASM in mind.
 - We do not provide any API dealing with 'web workers', which are a browser feature similar to threads except they have a **huge** overhead to launch and interact with.
 
 
@@ -19,7 +25,7 @@ This crate is designed for projects that want to ergonomically support WASM targ
 ### Pros
 
 - `enfync::PendingResult<R>` can be used as a join handle.
-- `enfync::builtin::Handle::try_adopt()` can adopt an existing normal `tokio` runtime (no dependency on `prokio`'s LocalSet-specific design).
+- `enfync::builtin::native::TokioHandle::try_adopt()` can adopt an existing normal `tokio` runtime (no dependency on `prokio`'s LocalSet-specific design).
 - The `enfync::ResultReceiver`/`enfync::Handle` abstractions allow users to easily implement their own custom runtimes (you could even implement a `prokio`-backed `Handle`).
 
 ### Cons

@@ -2,12 +2,14 @@
 #![doc = include_str!("../README.md")]
 
 //module tree
-pub mod builtin;
 mod handle;
 mod pending_result;
 mod result_receiver;
 mod sleep;
 mod spawners;
+
+#[cfg(feature = "builtin")]
+pub mod builtin;
 
 //API exports
 pub use crate::handle::*;
