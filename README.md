@@ -62,8 +62,8 @@ wasm-bindgen --out-dir ./pkg --target no-modules ./target/wasm32-unknown-unknown
 
 ## Running WASM
 
-**Tests**: `wasm-pack test --node`
-**Run your program**: [wasm-server-runner](https://github.com/jakobhellermann/wasm-server-runner) tool
+- **Tests**: `wasm-pack test --node`
+- **Run your program**: [wasm-server-runner](https://github.com/jakobhellermann/wasm-server-runner) tool
 
 
 
@@ -86,8 +86,3 @@ wasm-bindgen --out-dir ./pkg --target no-modules ./target/wasm32-unknown-unknown
 
 - Default threadpool initialization is deferred to the first time you spawn something on that threadpool.
 
-
-
-## Comments
-
-- This crate does not use `rustfmt`.

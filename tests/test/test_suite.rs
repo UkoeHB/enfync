@@ -2,7 +2,7 @@
 
 //third-party shortcuts
 #[cfg(not(target_family = "wasm"))]
-use enfync::HandleTrait;
+use enfync::Handle;
 
 //standard shortcuts
 
@@ -22,7 +22,7 @@ fn print_dbg(s: &str)
 //-------------------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------------------
 
-async fn basic_try_extract<H: enfync::HandleTrait>()
+async fn basic_try_extract<H: enfync::Handle>()
 {
     // make task
     print_dbg("test: basic_try_extract");
@@ -48,7 +48,7 @@ async fn basic_try_extract<H: enfync::HandleTrait>()
 
 //-------------------------------------------------------------------------------------------------------------------
 
-async fn basic_extract<H: enfync::HandleTrait>()
+async fn basic_extract<H: enfync::Handle>()
 {
     // make task
     print_dbg("test: basic_extract");
@@ -67,7 +67,7 @@ async fn basic_extract<H: enfync::HandleTrait>()
 
 //-------------------------------------------------------------------------------------------------------------------
 
-async fn basic_nesting<H: enfync::HandleTrait>()
+async fn basic_nesting<H: enfync::Handle>()
 {
     // make task
     print_dbg("test: basic_nesting");
@@ -89,7 +89,7 @@ async fn basic_nesting<H: enfync::HandleTrait>()
 
 //-------------------------------------------------------------------------------------------------------------------
 
-async fn test_suite_impl<H: enfync::HandleTrait>()
+async fn test_suite_impl<H: enfync::Handle>()
 {
     basic_try_extract::<H>().await;
     basic_extract::<H>().await;

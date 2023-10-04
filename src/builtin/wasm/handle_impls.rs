@@ -13,7 +13,7 @@ use std::future::Future;
 #[derive(Clone, Debug, Default)]
 pub struct WASMHandle;
 
-impl HandleTrait for WASMHandle
+impl Handle for WASMHandle
 {
     fn spawn<R, F>(&self, task: F) -> PendingResult<R>
     where

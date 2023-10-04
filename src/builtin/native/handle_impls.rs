@@ -14,7 +14,7 @@ use std::future::Future;
 #[derive(Clone, Debug)]
 pub struct TokioHandle(pub tokio::runtime::Handle);
 
-impl HandleTrait for TokioHandle
+impl Handle for TokioHandle
 {
     fn spawn<R, F>(&self, task: F) -> PendingResult<R>
     where
@@ -63,7 +63,7 @@ impl From<tokio::runtime::Handle> for TokioHandle
 #[derive(Clone, Default)]
 pub struct CPUHandle;
 
-impl HandleTrait for CPUHandle
+impl Handle for CPUHandle
 {
     fn spawn<R, F>(&self, task: F) -> PendingResult<R>
     where
