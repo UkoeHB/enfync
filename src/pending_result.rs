@@ -8,8 +8,8 @@ use std::fmt::Debug;
 
 //-------------------------------------------------------------------------------------------------------------------
 
-/// Error that can be emitted when extracting a `PendingResult`.
-#[derive(Debug)]
+/// Error that can be emitted by a [`PendingResult`].
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum ResultError
 {
     /// Result has already been taken.
@@ -29,7 +29,7 @@ pub struct PendingResult<R>
 
 impl<R: Debug + Send + Sync + 'static> PendingResult<R>
 {
-    /// Make a new pending result
+    /// Make a new pending result.
     pub fn new(receiver: impl ResultReceiver<Result = R> + Send + Sync + 'static) -> Self
     {
         Self{ result_receiver: Some(Box::new(receiver)) }
@@ -41,7 +41,7 @@ impl<R: Debug + Send + Sync + 'static> PendingResult<R>
         Self{ result_receiver: Some(Box::new(ImmedateResultReceiver::new(result))) }
     }
 
-    /// Check if result is available.
+    /// Check if the result is available.
     pub fn has_result(&self) -> bool
     {
         match &self.result_receiver
@@ -53,7 +53,7 @@ impl<R: Debug + Send + Sync + 'static> PendingResult<R>
         }
     }
 
-    /// Check if work is done (result may be unavailable if already extracted).
+    /// Check if work is done (the result may be unavailable if it was already extracted).
     /// - This is robust for checking if a result-less task has completed (i.e. `PendingResult<()>`).
     pub fn done(&self) -> bool
     {
@@ -61,14 +61,15 @@ impl<R: Debug + Send + Sync + 'static> PendingResult<R>
         false
     }
 
-    /// Extract result if available (non-blocking).
+    /// Extract the result if available (non-blocking).
+    ///
     /// Returns `None` if the result is still pending.
     pub fn try_extract(&mut self) -> Option<Result<R, ResultError>>
     {
         // check if result is pending
         if !self.has_result() && self.result_receiver.is_some() { return None; }
 
-        // extract thread result
+        // extract result
         match &mut self.result_receiver
         {
             Some(receiver) => receiver.try_get(),
@@ -76,13 +77,13 @@ impl<R: Debug + Send + Sync + 'static> PendingResult<R>
         }
     }
 
-    /// Extract result (async).
+    /// Extract the result (async).
     pub async fn extract(&mut self) -> Result<R, ResultError>
     {
         // consume the result receiver
         let Some(receiver) = self.result_receiver.take() else { return Err(ResultError::Taken); };
 
-        // await thread result
+        // await result
         receiver.get().await
     }
 }
@@ -92,7 +93,9 @@ impl<R: Debug + Send + Sync + 'static> PendingResult<R>
 #[cfg(not(target_family = "wasm"))]
 pub mod blocking
 {
-    /// Extract a pending result while blocking.
+    /// Extract a pending result while blocking the current thread.
+    ///
+    /// Not available on WASM targets.
     pub fn extract<R>(mut pending_result: super::PendingResult<R>) -> Result<R, super::ResultError>
     where
         R: Send + Sync + std::fmt::Debug + 'static

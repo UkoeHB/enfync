@@ -1,5 +1,7 @@
 //documentation
 #![doc = include_str!("../README.md")]
+#![allow(unused_imports)]
+use crate as enfync;
 
 //module tree
 mod handle;

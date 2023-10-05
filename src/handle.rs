@@ -8,8 +8,10 @@ use std::fmt::Debug;
 
 //-------------------------------------------------------------------------------------------------------------------
 
+/// A handle to a runtime.
 pub trait Handle: Clone + Default + TryAdopt
 {
+    /// Spawn a task on the handle's runtime.
     fn spawn<R, F>(&self, task: F) -> PendingResult<R>
     where
         R: Debug + Send + Sync + 'static,
@@ -19,6 +21,7 @@ pub trait Handle: Clone + Default + TryAdopt
 //-------------------------------------------------------------------------------------------------------------------
 
 /// Try to adopt the existing runtime.
+///
 /// Returns `None` if no runtime is detected.
 pub trait TryAdopt: Sized
 {

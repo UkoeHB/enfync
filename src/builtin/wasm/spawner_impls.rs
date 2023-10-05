@@ -8,7 +8,7 @@ use crate::*;
 
 //-------------------------------------------------------------------------------------------------------------------
 
-/// Implements `OneshotSpawner` for `wasm` runtimes (spawn on local thread).
+/// Implements `OneshotSpawner` for `wasm` runtimes (spawns wasm tasks).
 #[derive(Debug, Clone, Default)]
 pub struct WasmIOSpawner;
 

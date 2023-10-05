@@ -8,7 +8,7 @@ use std::fmt::Debug;
 
 //-------------------------------------------------------------------------------------------------------------------
 
-/// Implements `SimpleSpawner` for `tokio` runtimes (spawn on tokio runtime).
+/// Implements `SimpleSpawner` for `tokio` runtimes (spawns tasks on a tokio runtime).
 #[derive(Debug)]
 pub struct TokioSpawner<R>
 {
@@ -48,7 +48,7 @@ impl<R: Send + 'static> From<tokio::runtime::Handle> for TokioSpawner<R> {
 
 //-------------------------------------------------------------------------------------------------------------------
 
-/// Implements `OneshotSpawner` for `std` runtimes (spawn new thread).
+/// Implements `OneshotSpawner` for `std` runtimes (spawns new std threads).
 #[derive(Debug, Clone, Default)]
 pub struct StdSpawner;
 

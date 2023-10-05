@@ -8,6 +8,7 @@ use std::time::Duration;
 //-------------------------------------------------------------------------------------------------------------------
 
 /// Sleep for the specified duration.
+///
 /// On native builds, this should be executed from within a tokio runtime, otherwise it will block!
 pub async fn sleep(duration: Duration)
 {

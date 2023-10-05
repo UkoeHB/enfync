@@ -10,6 +10,7 @@ use std::future::Future;
 //-------------------------------------------------------------------------------------------------------------------
 
 /// Built-in IO runtime handle (spawns tokio tasks).
+///
 /// If you access this via `::default()`, you will get a handle to a statically-initialized tokio runtime.
 #[derive(Clone, Debug)]
 pub struct TokioHandle(pub tokio::runtime::Handle);
@@ -34,11 +35,9 @@ impl Default for TokioHandle
         static RUNTIME: std::sync::OnceLock<tokio::runtime::Runtime> = std::sync::OnceLock::new();
 
         let runtime = RUNTIME.get_or_init(
-                || {
-                    tokio::runtime::Runtime::new().expect("unable to make default tokio runtime")
-                }
+                || { tokio::runtime::Runtime::new().expect("unable to make default tokio runtime") }
             );
-            TokioHandle(runtime.handle().clone())
+        TokioHandle(runtime.handle().clone())
     }
 }
 
@@ -59,7 +58,7 @@ impl From<tokio::runtime::Handle> for TokioHandle
 
 //-------------------------------------------------------------------------------------------------------------------
 
-/// Built-in CPU runtime handle (std threads)
+/// Built-in CPU runtime handle (makes new std threads).
 #[derive(Clone, Default)]
 pub struct CPUHandle;
 

@@ -7,6 +7,7 @@ use std::fmt::Debug;
 
 //-------------------------------------------------------------------------------------------------------------------
 
+/// Task spawner for [`OneshotResultReceiver`](crate::OneshotResultReceiver).
 pub trait OneshotSpawner: Debug + Send + Sync + 'static
 {
     fn spawn<F>(&self, task: F)
@@ -16,6 +17,7 @@ pub trait OneshotSpawner: Debug + Send + Sync + 'static
 
 //-------------------------------------------------------------------------------------------------------------------
 
+/// Task spawner for [`SimpleResultReceiver`](crate::SimpleResultReceiver).
 pub trait SimpleSpawner<R>: Debug + Send + Sync + 'static
 {
     type Error: Debug + Send + 'static;
@@ -34,7 +36,7 @@ impl<Ss: SimpleSpawner::<()>> OneshotSpawner for Ss
     where
         F: std::future::Future<Output = ()> + Send + 'static,
     {
-        self.spawn(task);  //detach future (assume oneshots use a oneshot channel)
+        self.spawn(task);
     }
 }
 
