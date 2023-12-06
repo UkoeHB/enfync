@@ -48,6 +48,32 @@ async fn basic_try_extract<H: enfync::Handle>()
 
 //-------------------------------------------------------------------------------------------------------------------
 
+fn sync_try_extract<H: enfync::Handle>()
+{
+    // make task
+    print_dbg("test: sync_try_extract");
+    let val = 10;
+    let task = async move { enfync::sleep(std::time::Duration::from_millis(25)).await; print_dbg("task ran"); val };
+
+    // spawn task
+    print_dbg("test: sync_try_extract... spawning");
+    let mut pending_result = H::default().spawn(task);
+
+    // wait for async machinery
+    print_dbg("test: sync_try_extract... sleeping");
+    std::thread::sleep(std::time::Duration::from_millis(15));
+
+    // task should be done
+    assert!(pending_result.done());
+
+    // wait for task
+    print_dbg("test: sync_try_extract... extracting");
+    let Some(Ok(res)) = pending_result.try_extract() else { panic!(""); };
+    assert_eq!(res, val);
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+
 async fn basic_extract<H: enfync::Handle>()
 {
     // make task
@@ -112,8 +138,8 @@ fn test_core_native()
 {
     let io_handle = enfync::builtin::Handle::default();
 
-    // test suit
-    io_handle.spawn( async { test_suite().await; });
+    // test try_extract in sync context
+    sync_try_extract::<enfync::builtin::Handle>();
 
     // test blocking extract
     let val = 10;
@@ -131,6 +157,9 @@ fn test_core_native()
     let pending_result = enfync::builtin::native::CPUHandle::default().spawn(async move { pending_result.extract().await });
     let Ok(Ok(res)) = enfync::blocking::extract(pending_result) else { panic!(""); };
     assert_eq!(res, val);
+
+    // test suite
+    let Ok(()) = enfync::blocking::extract(io_handle.spawn( async { test_suite().await; })) else { panic!(""); };
 }
 
 //-------------------------------------------------------------------------------------------------------------------
