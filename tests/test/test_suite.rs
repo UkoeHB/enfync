@@ -61,7 +61,7 @@ fn sync_try_extract<H: enfync::Handle>()
 
     // wait for async machinery
     print_dbg("test: sync_try_extract... sleeping");
-    std::thread::sleep(std::time::Duration::from_millis(15));
+    std::thread::sleep(std::time::Duration::from_millis(50));
 
     // task should be done
     assert!(pending_result.done());

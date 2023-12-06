@@ -4,7 +4,8 @@ use crate::*;
 //third-party shortcuts
 
 //standard shortcuts
-use futures::future::MaybeDone;
+use futures::Future;
+use futures::future::{FusedFuture, MaybeDone};
 use std::fmt::Debug;
 use std::pin::Pin;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -150,8 +151,17 @@ where
 
     fn try_get(&mut self) -> Option<Result<Self::Result, ResultError>>
     {
-        let pinned_fut = Pin::new(&mut self.future_result);
+        // poll the future once
+        let mut pinned_fut = Pin::new(&mut self.future_result);
 
+        if !pinned_fut.is_terminated()
+        {
+            let noop_waker = futures::task::noop_waker();
+            let mut ctx = futures::task::Context::from_waker(&noop_waker);
+            let _ = pinned_fut.as_mut().poll(&mut ctx);
+        }
+
+        // check output
         match pinned_fut.take_output()
         {
             Some(Ok(res)) => { self.result_taken = Some(ResultError::Taken); Some(Ok(res)) }

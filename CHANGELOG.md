@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2]
+
+### Fixed
+
+- `SimpleResultReceiver::try_extract()` now works properly.
+
+
 ## [0.1.1]
 
 ### Changed
