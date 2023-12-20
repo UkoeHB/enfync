@@ -78,6 +78,8 @@ impl<R: Debug + Send + Sync + 'static> PendingResult<R>
     }
 
     /// Extract the result (async).
+    ///
+    /// This method is not cancellation-safe.
     pub async fn extract(&mut self) -> Result<R, ResultError>
     {
         // consume the result receiver
