@@ -25,7 +25,7 @@ fn print_dbg(s: &str)
 //-------------------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------------------
 
-async fn basic_try_extract<H: enfync::Handle>(handle: H)
+async fn basic_try_extract(handle: impl enfync::Handle)
 {
     // make task
     print_dbg("test: basic_try_extract");
@@ -51,7 +51,7 @@ async fn basic_try_extract<H: enfync::Handle>(handle: H)
 
 //-------------------------------------------------------------------------------------------------------------------
 
-fn sync_try_extract<H: enfync::Handle>(handle: H)
+fn sync_try_extract(handle: impl enfync::Handle)
 {
     // make task
     print_dbg("test: sync_try_extract");
@@ -77,7 +77,7 @@ fn sync_try_extract<H: enfync::Handle>(handle: H)
 
 //-------------------------------------------------------------------------------------------------------------------
 
-async fn basic_extract<H: enfync::Handle>(handle: H)
+async fn basic_extract(handle: impl enfync::Handle)
 {
     // make task
     print_dbg("test: basic_extract");
@@ -96,7 +96,7 @@ async fn basic_extract<H: enfync::Handle>(handle: H)
 
 //-------------------------------------------------------------------------------------------------------------------
 
-async fn basic_nesting<H: enfync::Handle>(handle: H)
+async fn basic_nesting(handle: impl enfync::Handle)
 {
     // make task
     print_dbg("test: basic_nesting");
@@ -118,7 +118,7 @@ async fn basic_nesting<H: enfync::Handle>(handle: H)
 
 //-------------------------------------------------------------------------------------------------------------------
 
-async fn test_suite_impl<H: enfync::Handle + Clone>(handle: H)
+async fn test_suite_impl(handle: impl enfync::Handle)
 {
     basic_try_extract(handle.clone()).await;
     basic_extract(handle.clone()).await;

@@ -1,10 +1,10 @@
 # Changelog
 
-## [0.2.1]
+## [0.1.5]
 
 ### Fixed
 
-- Do not require `Clone + Default` on `Handle`. This fixes the inability to box a `Handle` caused by the `Sized` bound.
+- Revert removal of `Clone + Default + TryAdopt` from `Handle`. Yanked: v0.1.4, v0.2.0, v0.2.1.
 
 
 ## [0.1.3]
