@@ -48,7 +48,7 @@ wasm-bindgen --out-dir ./pkg --target no-modules ./target/wasm32-unknown-unknown
 
 ## Running WASM
 
-- **Tests**: `wasm-pack test --node`
+- **Tests**: `wasm-pack test --firefox --headless`. Note that `--node` tests currently fail due to an obscure error caused by the `wasmtimer` dependency.
 - **Run your program locally**: [wasm-server-runner](https://github.com/jakobhellermann/wasm-server-runner) tool
 
 
