@@ -25,7 +25,7 @@ fn print_dbg(s: &str)
 //-------------------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------------------
 
-async fn basic_try_extract<H: enfync::Handle>()
+async fn basic_try_extract<H: enfync::Handle>(handle: H)
 {
     // make task
     print_dbg("test: basic_try_extract");
@@ -34,7 +34,7 @@ async fn basic_try_extract<H: enfync::Handle>()
 
     // spawn task
     print_dbg("test: basic_try_extract... spawning");
-    let mut pending_result = H::default().spawn(task);
+    let mut pending_result = handle.spawn(task);
 
     // wait for async machinery
     print_dbg("test: basic_try_extract... sleeping");
@@ -51,7 +51,7 @@ async fn basic_try_extract<H: enfync::Handle>()
 
 //-------------------------------------------------------------------------------------------------------------------
 
-fn sync_try_extract<H: enfync::Handle>()
+fn sync_try_extract<H: enfync::Handle>(handle: H)
 {
     // make task
     print_dbg("test: sync_try_extract");
@@ -60,7 +60,7 @@ fn sync_try_extract<H: enfync::Handle>()
 
     // spawn task
     print_dbg("test: sync_try_extract... spawning");
-    let mut pending_result = H::default().spawn(task);
+    let mut pending_result = handle.spawn(task);
 
     // wait for async machinery
     print_dbg("test: sync_try_extract... sleeping");
@@ -77,7 +77,7 @@ fn sync_try_extract<H: enfync::Handle>()
 
 //-------------------------------------------------------------------------------------------------------------------
 
-async fn basic_extract<H: enfync::Handle>()
+async fn basic_extract<H: enfync::Handle>(handle: H)
 {
     // make task
     print_dbg("test: basic_extract");
@@ -86,7 +86,7 @@ async fn basic_extract<H: enfync::Handle>()
 
     // spawn task
     print_dbg("test: basic_extract... spawning");
-    let mut pending_result = H::default().spawn(task);
+    let mut pending_result = handle.spawn(task);
 
     // wait for the result
     print_dbg("test: basic_extract... waiting");
@@ -96,7 +96,7 @@ async fn basic_extract<H: enfync::Handle>()
 
 //-------------------------------------------------------------------------------------------------------------------
 
-async fn basic_nesting<H: enfync::Handle>()
+async fn basic_nesting<H: enfync::Handle>(handle: H)
 {
     // make task
     print_dbg("test: basic_nesting");
@@ -105,11 +105,11 @@ async fn basic_nesting<H: enfync::Handle>()
 
     // spawn task
     print_dbg("test: basic_nesting... spawning");
-    let mut pending_result = H::default().spawn(task);
+    let mut pending_result = handle.spawn(task);
 
     // make new task waiting for other task
     print_dbg("test: basic_nesting... new task");
-    let mut pending_result = H::default().spawn(async move { pending_result.extract().await });
+    let mut pending_result = handle.spawn(async move { pending_result.extract().await });
 
     print_dbg("test: basic_nesting... waiting");
     let Ok(Ok(res)) = pending_result.extract().await else { panic!(""); };
@@ -118,11 +118,11 @@ async fn basic_nesting<H: enfync::Handle>()
 
 //-------------------------------------------------------------------------------------------------------------------
 
-async fn test_suite_impl<H: enfync::Handle>()
+async fn test_suite_impl<H: enfync::Handle + Clone>(handle: H)
 {
-    basic_try_extract::<H>().await;
-    basic_extract::<H>().await;
-    basic_nesting::<H>().await;
+    basic_try_extract(handle.clone()).await;
+    basic_extract(handle.clone()).await;
+    basic_nesting(handle.clone()).await;
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -130,7 +130,7 @@ async fn test_suite_impl<H: enfync::Handle>()
 async fn test_suite()
 {
     print_dbg("test suite");
-    test_suite_impl::<enfync::builtin::Handle>().await;
+    test_suite_impl(enfync::builtin::Handle::default()).await;
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -142,7 +142,7 @@ fn test_core_native()
     let io_handle = enfync::builtin::Handle::default();
 
     // test try_extract in sync context
-    sync_try_extract::<enfync::builtin::Handle>();
+    sync_try_extract(io_handle.clone());
 
     // test blocking extract
     let val = 10;
