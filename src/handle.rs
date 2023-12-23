@@ -9,7 +9,7 @@ use std::fmt::Debug;
 //-------------------------------------------------------------------------------------------------------------------
 
 /// A handle to a runtime.
-pub trait Handle: Clone + Default + TryAdopt
+pub trait Handle: Clone + Default
 {
     /// Spawn a task on the handle's runtime.
     fn spawn<R, F>(&self, task: F) -> PendingResult<R>

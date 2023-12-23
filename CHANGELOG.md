@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3]
+
+### Fixed
+
+- Do not require `TryAdopt` on `Handle`. This fixes the inability to box a `Handle` caused by the `Sized` bound on `TryAdopt`.
+
+
 ## [0.1.2]
 
 ### Fixed

@@ -37,7 +37,7 @@ futures     = { version = "0.3" }
 tokio = { version = "1.29", default-features = false, features = [ "rt-multi-thread", "time" ] }
 
 [target.'cfg(target_family = "wasm")'.dependencies]
-gloo-timers          = { version = "0.2", features = [ "futures" ] }
+wasmtimer            = { version = "0.2" }
 wasm-bindgen         = { version = "0.2" }
 wasm-bindgen-futures = { version = "0.4" }
 

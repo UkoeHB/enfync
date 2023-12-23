@@ -28,7 +28,7 @@ pub async fn sleep(duration: Duration)
 
     #[cfg(target_family = "wasm")]
     {
-        gloo_timers::future::TimeoutFuture::new(duration.as_millis() as u32).await;
+        wasmtimer::tokio::sleep(duration).await;
         return;
     }
 }
