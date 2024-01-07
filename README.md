@@ -21,6 +21,26 @@ This crate is designed for projects that want to ergonomically support WASM targ
 
 
 
+## Usage
+
+Schedule async work using the built-in spawner. We adopt the existing async runtime if one is detected or fall back to the built-in default runtime.
+
+```rust
+let pending_result = enfync::builtin::Handle::adopt_or_default().spawn(
+    async move {
+        // your async work
+    }
+);
+```
+
+Wait for the result using the [`PendingResult`], which is a join handle on the task.
+
+```rust
+let result = pending_result.extract().await.unwrap();
+```
+
+
+
 ## Recommended WASM Build
 
 We provide a custom `release-wasm` profile that enables `panic = "abort"` and optimizes for small binaries. There is a corresponding `dev-wasm` profile that enables `panic = "abort"`. Currently `wasm-pack` [doesn't support](https://github.com/rustwasm/wasm-pack/issues/1111) custom profiles, so we have to settle for a more verbose build script that overwrites the build files.

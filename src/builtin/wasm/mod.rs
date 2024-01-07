@@ -1,3 +1,7 @@
+/*!
+Provides built-in [`Handle`](super::Handle) implementations for WASM targets.
+*/
+
 //module tree
 mod handle_impls;
 mod spawner_impls;

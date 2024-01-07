@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.6]
+
+### Changed
+
+- Update docs.
+
+
 ## [0.1.5]
 
 ### Fixed

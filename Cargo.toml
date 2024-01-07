@@ -11,19 +11,19 @@ repository = "https://github.com/UkoeHB/enfync"
 
 [features]
 default = ["builtin"]
+
+# Enables builtin handles.
 builtin = []
 
 [lib]
 path = "src/lib.rs"
 test = false
+doctest = false
 
 [[test]]
 name    = "test"
 path    = "tests/test/mod.rs"
 doctest = false
-
-#[target.'cfg(target_family = "wasm")'.lib]  # for some reason this isn't being used... because of [lib]?
-#crate-type = ["cdylib", "rlib"]
 
 [package.metadata.docs.rs]
 all-features = true

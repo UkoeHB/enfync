@@ -92,6 +92,7 @@ impl<R: Debug + Send + Sync + 'static> PendingResult<R>
 
 //-------------------------------------------------------------------------------------------------------------------
 
+/// Only available on non-WASM targets.
 #[cfg(not(target_family = "wasm"))]
 pub mod blocking
 {
