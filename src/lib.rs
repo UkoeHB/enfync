@@ -1,3 +1,6 @@
+//features
+#![cfg_attr(docsrs, feature(doc_cfg))]
+
 //documentation
 #![doc = include_str!("../README.md")]
 #![allow(unused_imports)]
@@ -11,6 +14,7 @@ mod sleep;
 mod spawners;
 
 #[cfg(feature = "builtin")]
+#[cfg_attr(docsrs, doc(cfg(feature = "builtin")))]
 pub mod builtin;
 
 //API exports
